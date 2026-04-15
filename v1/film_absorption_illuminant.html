@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Color negative film — absorption &amp; illuminant</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #ffffff;
+  color: #1a1a1a;
+  margin: 0;
+  padding: 20px 24px 40px;
+  max-width: 860px;
+}
+@media (prefers-color-scheme: dark) {
+  body { background: #181818; color: #e0ddd6; }
+  .controls-box { background: #222; border-color: #333; }
+  .sep { background: #2e2e2e; }
+  .sep-heavy { background: #3a3a3a; }
+}
+h1 { font-size: 15px; font-weight: 500; margin: 0 0 2px; }
+.subtitle { font-size: 12px; color: #888; margin: 0 0 20px; }
+.panel-title { font-size: 12px; font-weight: 500; margin: 0 0 4px; }
+canvas { display: block; width: 100%; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11px; color: #777; margin-top: 5px; }
+@media (prefers-color-scheme: dark) { .legend { color: #999; } }
+.li { display: flex; align-items: center; gap: 5px; }
+.ls { width: 22px; height: 3px; border-radius: 1px; }
+.sep { height: 1px; background: #ebebeb; margin: 14px 0; }
+.sep-heavy { height: 1px; background: #d0d0d0; margin: 18px 0; }
+.trans-title { font-size: 13px; font-weight: 500; margin: 0 0 2px; }
+#color-swatch { width: 60px; height: 24px; border-radius: 5px; border: 0.5px solid #ccc; }
+#illum-swatch { width: 32px; height: 14px; border-radius: 3px; border: 0.5px solid #ccc; display: inline-block; vertical-align: middle; }
+.controls-box { border: 0.5px solid #ddd; border-radius: 8px; padding: 12px 14px; margin-top: 12px; background: #f7f7f5; }
+.ctrl-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 12px; color: #666; flex-wrap: wrap; }
+.ctrl-row:last-child { margin-bottom: 0; }
+.ctrl-label { min-width: 110px; }
+.ctrl-val { min-width: 52px; font-weight: 500; color: #1a1a1a; }
+@media (prefers-color-scheme: dark) {
+  .ctrl-val { color: #e0ddd6; }
+  .ctrl-row { color: #999; }
+  #color-swatch, #illum-swatch { border-color: #444; }
+}
+input[type=range] { flex: 1; max-width: 200px; }
+</style>
+</head>
+<body>
+
+<h1>Color negative film — post-development absorption &amp; illuminant</h1>
+<p class="subtitle">Dye absorption · colored coupler residuals · transmission × backing light spectrum</p>
+
+<div class="panel-title" style="color:#007777;">Cyan dye layer — red-sensitive</div>
+<div style="position:relative;width:100%;height:150px;"><canvas id="cC" role="img" aria-label="Cyan layer absorption"></canvas></div>
+<div class="legend">
+  <div class="li"><div class="ls" style="background:#009999;height:2.5px;"></div><span>cyan dye</span></div>
+  <div class="li"><div class="ls" style="border-top:2px dashed #D4537E;"></div><span>pink coupler residual</span></div>
+  <div class="li"><div class="ls" style="border-top:1.5px dashed #555;"></div><span>total absorption</span></div>
+  <div class="li"><div class="ls" style="border-top:1.5px dashed #bbb;"></div><span>ideal</span></div>
+</div>
+
+<div class="sep"></div>
+
+<div class="panel-title" style="color:#993388;">Magenta dye layer — green-sensitive</div>
+<div style="position:relative;width:100%;height:150px;"><canvas id="mC" role="img" aria-label="Magenta layer absorption"></canvas></div>
+<div class="legend">
+  <div class="li"><div class="ls" style="background:#CC44AA;height:2.5px;"></div><span>magenta dye</span></div>
+  <div class="li"><div class="ls" style="border-top:2px dashed #BA7517;"></div><span>yellow coupler residual</span></div>
+  <div class="li"><div class="ls" style="border-top:1.5px dashed #555;"></div><span>total absorption</span></div>
+  <div class="li"><div class="ls" style="border-top:1.5px dashed #bbb;"></div><span>ideal</span></div>
+</div>
+
+<div class="sep"></div>
+
+<div class="panel-title" style="color:#AA8800;">Yellow dye layer — blue-sensitive</div>
+<div style="position:relative;width:100%;height:150px;"><canvas id="yC" role="img" aria-label="Yellow layer absorption"></canvas></div>
+<div class="legend">
+  <div class="li"><div class="ls" style="background:#CCAA00;height:2.5px;"></div><span>yellow dye</span></div>
+  <div class="li"><div class="ls" style="border-top:1.5px dashed #bbb;"></div><span>ideal</span></div>
+</div>
+
+<div class="sep-heavy"></div>
+
+<div class="trans-title">Resulting transmission × illuminant spectrum</div>
+<div style="font-size:11px;color:#777;margin:0 0 6px;">
+  What the sensor or eye actually receives — film transmission multiplied by the backing light spectrum.
+</div>
+<div style="position:relative;width:100%;height:200px;"><canvas id="tC" role="img" aria-label="Total received spectrum"></canvas></div>
+<div class="legend" style="margin-top:6px;">
+  <div class="li"><div class="ls" style="background:linear-gradient(90deg,#4477ff,#33bb55,#ee4400);height:3px;"></div><span>received spectrum</span></div>
+  <div class="li"><div class="ls" style="border-top:1.5px dashed #f5a623;"></div><span>illuminant (normalized)</span></div>
+  <div class="li"><div class="ls" style="border-top:1.5px dashed #bbb;"></div><span>flat reference</span></div>
+</div>
+
+<div style="display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap;">
+  <span style="font-size:11px;color:#777;">approximate perceived color:</span>
+  <div id="color-swatch"></div>
+  <span id="color-desc" style="font-size:11px;color:#777;"></span>
+</div>
+
+<div class="controls-box">
+  <div class="ctrl-row">
+    <span class="ctrl-label">Exposure</span>
+    <input type="range" id="sl-exp" min="0" max="100" value="50" step="1">
+    <span class="ctrl-val" id="sv-exp">50%</span>
+    <span style="font-size:10px;">0% = rebate · 100% = highlight</span>
+  </div>
+  <div class="ctrl-row">
+    <span class="ctrl-label">Light source</span>
+    <input type="range" id="sl-ct" min="3000" max="15000" value="6500" step="100">
+    <span class="ctrl-val" id="sv-ct">6500 K</span>
+    <span id="illum-swatch"></span>
+    <span id="ct-label" style="font-size:10px;"></span>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const NM = [];
+for (let n = 400; n <= 700; n += 5) NM.push(n);
+const L = NM.length;
+
+function bell(c,w,h,arr){ return arr.map(n=>h*Math.exp(-0.5*Math.pow((n-c)/w,2))); }
+function addArr(a,b){ return a.map((v,i)=>v+b[i]); }
+function mulArr(a,b){ return a.map((v,i)=>v*b[i]); }
+function clamp(a,lo,hi){ return a.map(v=>Math.min(hi,Math.max(lo,v))); }
+function normalize(a){ const mx=Math.max(...a); return mx>0?a.map(v=>v/mx):a.slice(); }
+
+function planck(T,nm){
+  const h=6.626e-34,c=2.998e8,k=1.381e-23,l=nm*1e-9;
+  return (2*h*c*c)/(Math.pow(l,5)*(Math.exp((h*c)/(l*k*T))-1));
+}
+function illuminant(T){ return normalize(NM.map(nm=>planck(T,nm))); }
+
+function nmToRGB(nm){
+  let r=0,g=0,b=0;
+  if(nm>=380&&nm<440){r=(440-nm)/60;b=1;}
+  else if(nm>=440&&nm<490){g=(nm-440)/50;b=1;}
+  else if(nm>=490&&nm<510){g=1;b=(510-nm)/20;}
+  else if(nm>=510&&nm<580){r=(nm-510)/70;g=1;}
+  else if(nm>=580&&nm<645){r=1;g=(645-nm)/65;}
+  else if(nm>=645&&nm<=700){r=1;}
+  return [r,g,b];
+}
+
+function illuminantColor(T){
+  const illum=illuminant(T);
+  let r=0,g=0,b=0;
+  NM.forEach((nm,i)=>{ const [rr,gg,bb]=nmToRGB(nm); r+=rr*illum[i]; g+=gg*illum[i]; b+=bb*illum[i]; });
+  const mx=Math.max(r,g,b);
+  return mx===0?[255,255,255]:[Math.round(r/mx*255),Math.round(g/mx*255),Math.round(b/mx*255)];
+}
+
+function cyanDye(t){ return clamp(addArr(addArr(bell(650,55,t,NM),bell(430,35,t*0.55,NM)),bell(530,50,t*0.38,NM)),0,1); }
+function pinkCoupler(t){ const r=1-t; return clamp(addArr(bell(420,40,r*0.55,NM),bell(520,55,r*0.35,NM)),0,1); }
+function cyanIdeal(){ return NM.map(n=>n>=580?0.9:0); }
+function magentaDye(t){ return clamp(addArr(bell(545,52,t,NM),bell(435,38,t*0.42,NM)),0,1); }
+function yellowCoupler(t){ return clamp(bell(430,42,(1-t)*0.42,NM),0,1); }
+function magentaIdeal(){ return NM.map(n=>(n>=490&&n<=620)?bell(545,52,1,[n])[0]:0); }
+function yellowDye(t){ return clamp(NM.map(n=>n>490?0:bell(440,38,t,[n])[0]),0,1); }
+function yellowIdeal(){ return NM.map(n=>n<=490?bell(440,38,1,[n])[0]:0); }
+
+function filmTransmission(t){
+  const cd=cyanDye(t),pc=pinkCoupler(t),md=magentaDye(t),yc=yellowCoupler(t),yd=yellowDye(t);
+  return NM.map((_,i)=>Math.pow(10,-(cd[i]+pc[i]+md[i]+yc[i]+yd[i])));
+}
+
+function computeSwatch(arr){
+  let r=0,g=0,b=0,w=0;
+  NM.forEach((nm,i)=>{ const [rr,gg,bb]=nmToRGB(nm); r+=rr*arr[i]; g+=gg*arr[i]; b+=bb*arr[i]; w+=arr[i]; });
+  if(w===0) return [20,20,20];
+  const mx=Math.max(r,g,b)/w,norm=mx>0?1/mx:1;
+  return [Math.min(255,Math.round(r/w*norm*255)),Math.min(255,Math.round(g/w*norm*255)),Math.min(255,Math.round(b/w*norm*255))];
+}
+
+function barColors(arr){
+  const mx=Math.max(...arr)||1;
+  return NM.map((nm,i)=>{ const [r,g,b]=nmToRGB(nm),a=0.25+(arr[i]/mx)*0.75; return `rgba(${Math.round(r*220)},${Math.round(g*220)},${Math.round(b*220)},${a.toFixed(2)})`; });
+}
+
+function ctLabel(T){
+  if(T<=3200) return 'tungsten / candlelight';
+  if(T<=4000) return 'warm white LED / sunrise';
+  if(T<=5000) return 'mid-morning sun';
+  if(T<=5500) return 'noon daylight';
+  if(T<=6500) return 'D65 standard daylight';
+  if(T<=7500) return 'overcast sky';
+  if(T<=9000) return 'open shade';
+  if(T<=12000) return 'blue sky horizon';
+  return 'deep blue sky / high altitude';
+}
+
+function swatchDesc(r,g,b){
+  const tot=r+g+b;
+  if(tot<60) return 'very dark';
+  if(r>g*1.5&&r>b*2.0) return 'strong warm / reddish-orange';
+  if(r>g*1.2&&r>b*1.4) return 'warm orange tint';
+  if(g>r*1.2&&g>b*1.2) return 'greenish tint';
+  if(b>r*1.5&&b>g*1.3) return 'strong cool / bluish';
+  if(b>r*1.2&&b>g*1.1) return 'cool bluish tint';
+  if(r>b*1.3&&g>b*1.2) return 'yellow-orange — typical orange mask';
+  return 'near neutral';
+}
+
+const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+const gridCol = isDark?'rgba(255,255,255,0.08)':'rgba(0,0,0,0.07)';
+const tickCol = isDark?'rgba(255,255,255,0.4)':'rgba(0,0,0,0.4)';
+const bf = isDark?0.08:0.06;
+
+const bands=[
+  {from:400,to:490,label:'blue', col:`rgba(60,100,220,${bf})`},
+  {from:490,to:580,label:'green',col:`rgba(40,160,80,${bf})`},
+  {from:580,to:700,label:'red',  col:`rgba(210,50,40,${bf})`},
+];
+
+const bandPlugin={
+  id:'bands',
+  beforeDraw(chart){
+    const{ctx,chartArea:ca,scales:{x}}=chart;
+    bands.forEach(b=>{
+      const x0=x.getPixelForValue(b.from),x1=x.getPixelForValue(b.to);
+      ctx.fillStyle=b.col; ctx.fillRect(x0,ca.top,x1-x0,ca.height);
+      ctx.fillStyle=isDark?'rgba(255,255,255,0.25)':'rgba(0,0,0,0.3)';
+      ctx.font='10px sans-serif'; ctx.textAlign='center';
+      ctx.fillText(b.label,(x0+x1)/2,ca.top+11);
+    });
+  }
+};
+Chart.register(bandPlugin);
+
+const absOpts=()=>({
+  responsive:true,maintainAspectRatio:false,animation:{duration:80},
+  plugins:{legend:{display:false},tooltip:{enabled:false}},
+  scales:{
+    x:{type:'linear',min:400,max:700,ticks:{stepSize:50,color:tickCol,font:{size:10}},grid:{color:gridCol},border:{display:false}},
+    y:{min:0,max:1.2,ticks:{stepSize:0.5,color:tickCol,font:{size:10},callback:v=>v.toFixed(1)},grid:{color:gridCol},border:{display:false}}
+  }
+});
+
+const transOpts=()=>({
+  responsive:true,maintainAspectRatio:false,animation:{duration:80},
+  plugins:{legend:{display:false},tooltip:{enabled:false}},
+  scales:{
+    x:{type:'linear',min:400,max:700,ticks:{stepSize:50,color:tickCol,font:{size:10}},grid:{color:gridCol},border:{display:false}},
+    y:{min:0,max:1.05,ticks:{stepSize:0.25,color:tickCol,font:{size:10},callback:v=>v.toFixed(2)},grid:{color:gridCol},border:{display:false}}
+  }
+});
+
+function makeAbsChart(id,datasets){
+  return new Chart(document.getElementById(id),{
+    type:'line',
+    data:{labels:NM,datasets:datasets.map(d=>({
+      data:d.data,borderColor:d.color,borderWidth:d.width||2,borderDash:d.dash||[],
+      fill:d.fill?{target:'origin',above:d.fillColor}:false,pointRadius:0,tension:0.4
+    }))},
+    options:absOpts()
+  });
+}
+
+let t=0.5,T=6500;
+
+const cChart=makeAbsChart('cC',[
+  {data:cyanIdeal(),color:isDark?'rgba(255,255,255,0.25)':'rgba(0,0,0,0.2)',width:1.5,dash:[5,4]},
+  {data:pinkCoupler(t),color:'#D4537E',width:2,dash:[5,3],fill:true,fillColor:isDark?'rgba(212,83,126,0.18)':'rgba(212,83,126,0.13)'},
+  {data:cyanDye(t),color:'#009999',width:2.5,fill:true,fillColor:isDark?'rgba(0,153,153,0.18)':'rgba(0,153,153,0.13)'},
+  {data:clamp(addArr(cyanDye(t),pinkCoupler(t)),0,2),color:isDark?'rgba(255,255,255,0.55)':'rgba(0,0,0,0.45)',width:1.5,dash:[2,2]},
+]);
+
+const mChart=makeAbsChart('mC',[
+  {data:magentaIdeal(),color:isDark?'rgba(255,255,255,0.25)':'rgba(0,0,0,0.2)',width:1.5,dash:[5,4]},
+  {data:yellowCoupler(t),color:'#BA7517',width:2,dash:[5,3],fill:true,fillColor:isDark?'rgba(186,117,23,0.18)':'rgba(186,117,23,0.13)'},
+  {data:magentaDye(t),color:'#CC44AA',width:2.5,fill:true,fillColor:isDark?'rgba(204,68,170,0.18)':'rgba(204,68,170,0.13)'},
+  {data:clamp(addArr(magentaDye(t),yellowCoupler(t)),0,2),color:isDark?'rgba(255,255,255,0.55)':'rgba(0,0,0,0.45)',width:1.5,dash:[2,2]},
+]);
+
+const yChart=makeAbsChart('yC',[
+  {data:yellowIdeal(),color:isDark?'rgba(255,255,255,0.25)':'rgba(0,0,0,0.2)',width:1.5,dash:[5,4]},
+  {data:yellowDye(t),color:'#CCAA00',width:2.5,fill:true,fillColor:isDark?'rgba(204,170,0,0.18)':'rgba(204,170,0,0.13)'},
+]);
+
+function buildTransData(t,T){
+  const film=filmTransmission(t),illum=illuminant(T);
+  return{recNorm:normalize(mulArr(film,illum)),illumNorm:normalize(illum)};
+}
+
+const{recNorm:rn0,illumNorm:in0}=buildTransData(t,T);
+
+const tChart=new Chart(document.getElementById('tC'),{
+  type:'bar',
+  data:{labels:NM,datasets:[
+    {data:rn0,backgroundColor:barColors(rn0),borderColor:barColors(rn0),borderWidth:0,barPercentage:1.1,categoryPercentage:1.0},
+    {type:'line',data:in0,borderColor:'rgba(245,166,35,0.7)',borderWidth:1.5,borderDash:[5,4],pointRadius:0,fill:false,tension:0.4},
+    {type:'line',data:Array(L).fill(1.0),borderColor:isDark?'rgba(255,255,255,0.2)':'rgba(0,0,0,0.18)',borderWidth:1,borderDash:[3,4],pointRadius:0,fill:false}
+  ]},
+  options:transOpts()
+});
+
+function updateSwatch(rn){
+  const[r,g,b]=computeSwatch(rn);
+  document.getElementById('color-swatch').style.background=`rgb(${r},${g},${b})`;
+  document.getElementById('color-desc').textContent=swatchDesc(r,g,b);
+}
+function updateIllumSwatch(T){
+  const[r,g,b]=illuminantColor(T);
+  document.getElementById('illum-swatch').style.background=`rgb(${r},${g},${b})`;
+  document.getElementById('ct-label').textContent=ctLabel(T);
+}
+
+updateSwatch(rn0);
+updateIllumSwatch(T);
+
+function updateAll(){
+  const cd=cyanDye(t),pc=pinkCoupler(t);
+  cChart.data.datasets[1].data=pc;
+  cChart.data.datasets[2].data=cd;
+  cChart.data.datasets[3].data=clamp(addArr(cd,pc),0,2);
+  cChart.update('none');
+
+  const md=magentaDye(t),yc=yellowCoupler(t);
+  mChart.data.datasets[1].data=yc;
+  mChart.data.datasets[2].data=md;
+  mChart.data.datasets[3].data=clamp(addArr(md,yc),0,2);
+  mChart.update('none');
+
+  yChart.data.datasets[1].data=yellowDye(t);
+  yChart.update('none');
+
+  const{recNorm,illumNorm}=buildTransData(t,T);
+  const bc=barColors(recNorm);
+  tChart.data.datasets[0].data=recNorm;
+  tChart.data.datasets[0].backgroundColor=bc;
+  tChart.data.datasets[0].borderColor=bc;
+  tChart.data.datasets[1].data=illumNorm;
+  tChart.update('none');
+
+  updateSwatch(recNorm);
+  updateIllumSwatch(T);
+}
+
+document.getElementById('sl-exp').addEventListener('input',e=>{
+  t=+e.target.value/100;
+  document.getElementById('sv-exp').textContent=e.target.value+'%';
+  updateAll();
+});
+document.getElementById('sl-ct').addEventListener('input',e=>{
+  T=+e.target.value;
+  document.getElementById('sv-ct').textContent=T.toLocaleString()+' K';
+  updateAll();
+});
+</script>
+</body>
+</html>
