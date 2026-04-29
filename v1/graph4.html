@@ -122,7 +122,7 @@ h1 em { font-style: italic; color: var(--text3); }
 .ls { width: 20px; height: 2px; border-radius: 1px; flex-shrink: 0; }
 .ls-solid  { height: 2.5px; }
 .ls-dashed { border-top: 2px dashed; background: transparent; height: 0; }
-.ls-faint  { border-top: 1.5px dashed; background: transparent; height: 0; }
+.ls-faint  { border-top: 2px dotted; background: transparent; height: 0; }
 
 .layer-chart { position: relative; height: 170px; padding: 8px 0 4px; }
 .layer-chart canvas { display: block; width: 100%; height: 100%; }
@@ -149,6 +149,8 @@ hr { border: none; border-top: 0.5px solid var(--border); margin: 28px 28px 0; }
 .note { border-left: 2px solid var(--border); padding: 0 0 0 16px; }
 .note-head { font-family: var(--mono); font-size: 11px; color: var(--text3); letter-spacing: .04em; margin-bottom: 5px; }
 .note-body { font-size: 14px; color: var(--text2); line-height: 1.68; }
+.notes .note .note-body {
+}
 .note-body strong { color: var(--text); font-weight: 500; }
 .note-body code { font-family: var(--mono); font-size: 12px; background: var(--bg3); padding: 1px 5px; border-radius: 3px; color: var(--text); }
 
@@ -174,10 +176,11 @@ hr { border: none; border-top: 0.5px solid var(--border); margin: 28px 28px 0; }
   <p class="eyebrow">graph4 &nbsp;·&nbsp; film scanning pipeline</p>
   <h1>Chromogenic dyes <em>&amp;</em> the colored coupler</h1>
   <p class="subtitle">
-    In color negative film, three dye layers form during development — cyan, magenta, and yellow.
-    Each layer starts from a colored coupler that has its own absorption before any dye has formed.
-    Drag the exposure slider to see how dye builds up as the residual coupler dissolves away —
-    and why this overlap is the root cause of the orange mask.
+    Color negative film contains three emulsion layers, each sensitive to one primary color. Each layer contains coupler compounds that convert to the corresponding dye during development — cyan in the red-sensitive layer, magenta in the green-sensitive layer, yellow in the blue-sensitive layer. The amount of dye formed is proportional to the exposure the film receives.<br/>
+The trouble is that real dyes are impure. Cyan dye absorbs not just red but also green and blue; magenta dye absorbs not just green but also some blue. These unwanted absorptions cause color errors when positives are produced.
+<br/>The fix is elegant and slightly counter-intuitive: the cyan and magenta couplers are themselves <i>colored</i> — reddish and yellowish respectively — absorbing exactly the same wavelengths their dyes will absorb once formed. Where the film is exposed, the coupler converts to dye and its own color disappears, but the unwanted filtering remains. Where the film is unexposed, the coupler stays, pre-absorbing those same wavelengths. The two always complement each other in optical density at any given wavelength, keeping total absorption constant across the frame.
+<br/>The visible side effect is the characteristic orange cast of every color negative — the dreaded orange mask. The interactive graph shows the balance between unreacted coupler and formed dye at different exposure levels, demonstrating how unwanted absorption stays constant and uniform across the frame, and can therefore be compensated by a single global correction applied to the light source. More detail below the charts.<br/>
+	  Drug the Exposure level slider to left or right to see how colored couplers affect the negative color and density at any given particular spot on film.
   </p>
 </div>
 
@@ -201,7 +204,7 @@ hr { border: none; border-top: 0.5px solid var(--border); margin: 28px 28px 0; }
         <div class="li"><div class="ls ls-solid" style="background:#009999"></div><span>cyan dye (formed)</span></div>
         <div class="li"><div class="ls ls-dashed" style="border-color:#D4537E"></div><span>pink coupler residual</span></div>
         <div class="li"><div class="ls ls-faint" style="border-color:#888"></div><span>total absorption</span></div>
-        <div class="li"><div class="ls ls-faint" style="border-color:#ccc"></div><span>ideal (red only)</span></div>
+        <div class="li"><div class="ls ls-dashed" style="border-color:#ccc"></div><span>ideal (red only)</span></div>
       </div>
     </div>
     <div class="layer-chart"><canvas id="cC" role="img" aria-label="Cyan dye layer absorption spectrum. Shows cyan dye forming, pink coupler residual decreasing, and their sum as total absorption."></canvas></div>
@@ -241,7 +244,7 @@ hr { border: none; border-top: 0.5px solid var(--border); margin: 28px 28px 0; }
 <div class="fact-strip">
   <div class="fact">
     <div class="fact-num">3<em> layers</em></div>
-    <div class="fact-desc">Cyan, magenta, and yellow dye layers — each formed from a different coupler compound during chromogenic development.</div>
+    <div class="fact-desc">Cyan, magenta, and yellow dye layers — each formed from a different coupler compound during chromogenic (aka color) development.</div>
   </div>
   <div class="fact">
     <div class="fact-num">2<em> of 3</em></div>
@@ -262,70 +265,39 @@ hr { border: none; border-top: 0.5px solid var(--border); margin: 28px 28px 0; }
   <div class="note">
     <div class="note-head">how chromogenic dyes form</div>
     <div class="note-body">
-      Color negative film has three emulsion layers, each sensitive to a different third of the visible spectrum.
-      During development, exposed silver halide grains react with a developing agent that simultaneously
-      oxidises and combines with a <strong>coupler</strong> molecule built into each layer.
-      This coupling reaction forms a dye molecule in place — cyan in the red-sensitive layer,
-      magenta in the green-sensitive layer, yellow in the blue-sensitive layer.
-      The amount of dye formed is proportional to the amount of silver developed,
-      which is proportional to the original exposure. <strong>More exposure → more dye formed.</strong>
+      As noted, color negative film has three emulsion layers, each sensitive to one primary color. Each layer contains coupler compounds incorporated at manufacture. During development, the exposed silver reacts with a color developer, which simultaneously oxidises and combines with the coupler to form a dye in place — cyan in the red-sensitive layer, magenta in the green-sensitive layer, yellow in the blue-sensitive layer. <i>The amount of dye formed depends directly on how much silver was developed</i>, which depends on the original exposure.
     </div>
   </div>
 
   <div class="note">
     <div class="note-head">what the slider shows — dye vs residual coupler</div>
     <div class="note-body">
-      At <strong>0% exposure</strong> (the film rebate, or the deepest shadow — no silver developed, no dye formed),
-      the coupler is entirely unconsumed. Its own absorption dominates the spectrum.
-      The pink coupler in the cyan layer absorbs strongly in the blue and green regions.
-      The yellow coupler in the magenta layer absorbs in the blue region.
-      At <strong>100% exposure</strong> (maximum highlight), all coupler has been consumed and converted to dye —
-      the residual coupler absorption disappears, replaced entirely by the dye's absorption curve.
-      In between, both coexist: total absorption is the sum of dye plus remaining coupler.
+At <strong>0% exposure</strong> — the film rebate — no silver was developed and no dye was formed, so the layer contains only unreacted coupler. At  <strong>100% exposure</strong>, all coupler has converted to dye and the coupler color is gone. Between these extremes, dye and residual coupler coexist: total absorption at any wavelength is their sum.
     </div>
   </div>
 
   <div class="note">
     <div class="note-head">why the orange mask exists</div>
     <div class="note-body">
-      The film rebate — the clear border between frames — receives zero exposure.
-      It contains no developed silver and no formed dye.
-      But the coupler is still fully present.
-      The pink residual coupler in the cyan layer absorbs blue and green light even with no dye present.
-      The yellow residual coupler in the magenta layer adds further blue absorption.
-      Together, these unconsumed couplers in the unexposed base produce
-      <strong>a warm orange-yellow cast across the entire frame — the orange mask.</strong>
-      It is not a defect or an accident; it is engineered deliberately to improve colour accuracy
-      by partially compensating for the unwanted secondary absorptions of the cyan and magenta dyes themselves.
+      The colored couplers remaining in unexposed areas are the orange mask. The reddish cyan-forming coupler absorbs green and blue; the yellowish magenta-forming coupler absorbs blue. Together they produce a warm orange cast across the entire negative. This is not a defect — it is the correction mechanism. Because each coupler absorbs exactly the wavelengths its corresponding dye absorbs unwantedly, the total absorption at those wavelengths stays constant regardless of local exposure. A constant error can be corrected globally, which is what a uniform filter or channel gain adjustment achieves when printing or scanning.
     </div>
   </div>
 
   <div class="note">
     <div class="note-head">why the yellow layer needs no correction</div>
     <div class="note-body">
-      The yellow dye absorbs only blue light, which is exactly what it should do.
-      Its coupler compound is colorless — it contributes no absorption before the dye forms.
-      This is why the yellow channel in a scanned negative is typically the cleanest:
-      no mask contribution, no cross-channel contamination from the coupler.
-      <strong>The cyan and magenta layers are where the complexity lives.</strong>
-      The cyan dye in particular has a significant secondary absorption in the blue region —
-      visible even at full exposure — which contributes to the colour correction problem
-      that a 3×3 colour matrix must solve during inversion.
+   The yellow-forming coupler is colorless. Yellow dye absorbs blue light and very little else — its unwanted absorptions in green and red are negligible. No colored coupler is needed, and none is used. The yellow layer contributes almost nothing to the orange mask.
+      
     </div>
   </div>
 
   <div class="note">
     <div class="note-head">implication for scanning — what the scanner actually measures</div>
     <div class="note-body">
-      When a scanner illuminates a frame of color negative, what each sensor channel receives is not
-      a clean single-dye signal. <strong>The red channel receives cyan dye absorption plus the pink
-      coupler residual. The green channel receives magenta dye plus yellow coupler residual.</strong>
-      The blue channel receives yellow dye only — but also the combined residual absorption from
-      both the pink and yellow couplers in the other layers, since all three layers are stacked.
-      This is why the raw blue channel of a negative scan is typically the most suppressed —
-      and why setting scanner exposure to balance the three channels before inversion is not
-      straightforward. The correct exposure point differs per channel, and varies across the
-      density range of the frame.
+ In an ideal world, each sensor channel reads exactly one dye layer: red photosites decode the cyan layer, green photosites decode the magenta layer, blue photosites decode the yellow layer — the other two layers being essentially transparent to each channel's wavelengths.<br/>
+The orange mask breaks this clean separation. It acts as a broadband blue attenuator sitting across the entire frame, independent of image content. With a daylight-balanced light source — where red, green, and blue components start at roughly equal intensity — the blue light that survives the mask arrives at the sensor one to two stops dimmer than red or green, regardless of what the image contains. In dynamic range terms, the blue channel is compressed from the start: fine tonal differences in the blue-sensitive layer get crowded into the bottom of the sensor's range, where noise lives.<br/>
+This matters most after inversion. When the negative is flipped to a positive, the compressed blue channel becomes the highlight end of the image — and highlights are exactly where lost detail cannot be recovered. A blue cast or blocked highlights in the scan are not a software problem; they are the consequence of not having enough blue signal at capture time.<br/>
+This is why the orange mask must be compensated at scan time, using optical or analog means — a cooler light source, per-channel exposure adjustment, or hardware gain — before the raw data is recorded. Attempting to correct it in post relies on signal that may simply not be there. Analog compensation before the ADC preserves the full tonal range in all three channels; post-processing can only redistribute what was captured.
     </div>
   </div>
 
