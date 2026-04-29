@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>graph22 — H&D curve · electron well limits · zone bands</title>
+<style>
+/* ─── reset ─────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ─── design tokens ─────────────────────────────────────────────────────── */
+:root {
+  --bg:     #ffffff;
+  --bg2:    #f5f4f1;
+  --bg3:    #eeedea;
+  --border: rgba(0,0,0,.11);
+  --text:   #1a1a18;
+  --text2:  #5c5b57;
+  --text3:  #9a9892;
+  --mono:   'DM Mono','Menlo','Courier New',monospace;
+  --sans:   system-ui,-apple-system,sans-serif;
+  --r:      10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:     #18181a;
+    --bg2:    #222224;
+    --bg3:    #2a2a2c;
+    --border: rgba(255,255,255,.09);
+    --text:   #e8e7e2;
+    --text2:  #9a9892;
+    --text3:  #5c5b57;
+  }
+}
+
+/* ─── page shell ─────────────────────────────────────────────────────────── */
+html, body { background: var(--bg); color: var(--text); font-family: var(--sans); }
+body { padding: 28px 22px 56px; max-width: 920px; margin: 0 auto; }
+
+/* ─── header ─────────────────────────────────────────────────────────────── */
+.eyebrow  { font-size: 11px; font-family: var(--mono); color: var(--text3);
+            letter-spacing: .06em; margin-bottom: 5px; }
+h1        { font-size: 20px; font-weight: 500; margin-bottom: 3px; }
+h1 em     { font-style: italic; color: var(--text2); }
+.subtitle { font-size: 13px; color: var(--text2); line-height: 1.6;
+            margin-bottom: 22px; max-width: 620px; }
+
+/* ─── film type selector pills ───────────────────────────────────────────── */
+.film-selector { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+.fs-btn {
+  font-size: 11px; padding: 4px 11px;
+  border: 0.5px solid var(--border); border-radius: 20px;
+  cursor: pointer; background: transparent; color: var(--text2);
+  font-family: var(--mono); transition: all .12s;
+}
+.fs-btn:hover { color: var(--text); border-color: var(--text3); }
+.fs-btn.on    { background: var(--bg2); color: var(--text); border-color: var(--text3); }
+
+/* ─── probe slider ───────────────────────────────────────────────────────── */
+.slider-row { display: flex; align-items: center; gap: 10px;
+              margin-bottom: 12px; font-size: 12px; color: var(--text2); }
+.slider-row input[type=range] { flex: 1; accent-color: var(--text); }
+.slider-val { font-family: var(--mono); min-width: 70px;
+              text-align: right; font-size: 12px; color: var(--text); }
+
+/* ─── two-chart grid ─────────────────────────────────────────────────────── */
+.charts-grid {
+  display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr);
+  gap: 0; border: 0.5px solid var(--border);
+  border-radius: var(--r); overflow: hidden;
+}
+.chart-panel   { padding: 12px 14px; background: var(--bg); }
+.chart-panel-r { border-left: 0.5px solid var(--border); background: var(--bg2); }
+.axis-label    { font-size: 10px; color: var(--text3);
+                 font-family: var(--mono); margin-bottom: 5px; }
+.chart-wrap    { position: relative; height: 300px; }
+
+/* ─── zone colour legend (below left chart) ──────────────────────────────── */
+.legend-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 7px; }
+.zl-item    { display: flex; align-items: center; gap: 4px;
+              font-size: 10px; color: var(--text3); font-family: var(--mono); }
+.zl-dot     { width: 8px; height: 8px; border-radius: 1px; flex-shrink: 0; }
+
+/* ─── numeric readout strip ──────────────────────────────────────────────── */
+.readout-bar {
+  display: flex; gap: 0; margin-top: 10px;
+  border: 0.5px solid var(--border); border-radius: var(--r);
+  overflow: hidden; flex-wrap: wrap;
+}
+.rb-item { flex: 1; min-width: 90px; padding: 8px 10px;
+           border-right: 0.5px solid var(--border); }
+.rb-item:last-child { border-right: none; }
+.rb-key  { font-size: 10px; color: var(--text3); font-family: var(--mono); margin-bottom: 2px; }
+.rb-val  { font-size: 12px; font-family: var(--mono); color: var(--text); font-weight: 500; }
+.rb-val.warn { color: #c87030; }
+.rb-val.good { color: #3a9a5c; }
+
+/* ─── observation notes ──────────────────────────────────────────────────── */
+hr { border: none; border-top: 0.5px solid var(--border); margin: 28px 0; }
+.notes { display: flex; flex-direction: column; gap: 14px; }
+.note  { border-left: 2px solid var(--border); padding: 0 0 0 16px; }
+.note-head { font-size: 11px; font-family: var(--mono); color: var(--text3);
+             letter-spacing: .04em; margin-bottom: 5px; }
+.note-body { font-size: 14px; color: var(--text2); line-height: 1.65; }
+.note-body strong { color: var(--text); font-weight: 500; }
+.note-body code   { font-family: var(--mono); font-size: 12px;
+                    background: var(--bg3); padding: 1px 5px;
+                    border-radius: 3px; color: var(--text); }
+
+/* ─── key-numbers fact strip ─────────────────────────────────────────────── */
+.fact-strip {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 0; border: 0.5px solid var(--border);
+  border-radius: var(--r); overflow: hidden; margin: 20px 0;
+}
+.fact         { padding: 14px 16px; border-right: 0.5px solid var(--border); }
+.fact:last-child { border-right: none; }
+.fact-num     { font-size: 26px; font-weight: 500; font-family: var(--mono);
+                color: var(--text); line-height: 1; margin-bottom: 4px; }
+.fact-num em  { font-style: normal; font-size: 14px; color: var(--text3); }
+.fact-desc    { font-size: 12px; color: var(--text2); line-height: 1.5; }
+
+/* ─── responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 580px) {
+  .charts-grid { grid-template-columns: 1fr; }
+  .chart-panel-r { border-left: none; border-top: 0.5px solid var(--border); }
+  .fact-strip    { grid-template-columns: 1fr; }
+  .fact          { border-right: none; border-bottom: 0.5px solid var(--border); }
+  .fact:last-child { border-bottom: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     PAGE HEADER
+     ═══════════════════════════════════════════════════════════════════════ -->
+<p class="eyebrow">graph22 &nbsp;·&nbsp; film scanning pipeline</p>
+<h1>H&amp;D curve <em>&rarr;</em> electron well · zone limits</h1>
+<p class="subtitle">
+  How scene log exposure maps to film density, and how that density
+  translates into electrons in a 14-bit sensor well — showing the
+  fraction of the well that film actually uses, and where the linear
+  zone of the characteristic curve lands within that fraction.
+</p>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     FILM TYPE SELECTOR
+     Three film stocks with different Dmin/Dmax and curve shapes.
+     Switching rebuilds both charts with new data.
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div class="film-selector" id="film-sel">
+  <button class="fs-btn on" data-film="neg">color negative</button>
+  <button class="fs-btn"    data-film="slide">slide / reversal</button>
+  <button class="fs-btn"    data-film="pan">B&amp;W panchromatic</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     PROBE SLIDER
+     Moves a crosshair along both charts simultaneously.
+     Value maps 0–100 → logH range of the current film stock.
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div class="slider-row">
+  <span>log H probe</span>
+  <input type="range" id="probe" min="0" max="100" value="45" step="1">
+  <span class="slider-val" id="probe-val">—</span>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     DUAL CHART GRID
+     Left:  H&D characteristic curve (density D vs log exposure H)
+              — zone background shading: toe / linear / shoulder
+              — movable crosshair probe dot
+     Right: Electron well fill curve (electrons vs density D)
+              — red bands: wasted headroom (above Dmin) and floor (below Dmax)
+              — coloured bands: toe / linear / shoulder mapped from H&D zones
+              — dashed boundary lines between bands
+              — movable crosshair probe dot (same probe, different axis)
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div class="charts-grid">
+  <div class="chart-panel">
+    <div class="axis-label">density D &nbsp;·&nbsp; log exposure H (log lux·s)</div>
+    <div class="chart-wrap">
+      <canvas id="c-hd" role="img"
+        aria-label="H&D characteristic curve. Toe region left, linear region centre, shoulder right. Probe crosshair moves with slider.">
+        H&D characteristic curve.
+      </canvas>
+    </div>
+    <div class="legend-row">
+      <span class="zl-item"><span class="zl-dot" style="background:#6090d0"></span>toe</span>
+      <span class="zl-item"><span class="zl-dot" style="background:#50a860"></span>linear</span>
+      <span class="zl-item"><span class="zl-dot" style="background:#c87030"></span>shoulder</span>
+    </div>
+  </div>
+
+  <div class="chart-panel chart-panel-r">
+    <div class="axis-label">electrons in well &nbsp;·&nbsp; 0 → 16 383 (14-bit)</div>
+    <div class="chart-wrap">
+      <canvas id="c-well" role="img"
+        aria-label="Electron well fill vs density. Wasted headroom at top, wasted floor at bottom. Toe, linear, and shoulder bands marked between those limits.">
+        Electron well fill curve with zone bands.
+      </canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     NUMERIC READOUT STRIP
+     Updates on every slider move and film switch.
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div class="readout-bar">
+  <div class="rb-item"><div class="rb-key">log H</div>       <div class="rb-val" id="r-logh">—</div></div>
+  <div class="rb-item"><div class="rb-key">density D</div>   <div class="rb-val" id="r-d">—</div></div>
+  <div class="rb-item"><div class="rb-key">transmittance</div><div class="rb-val" id="r-t">—</div></div>
+  <div class="rb-item"><div class="rb-key">electrons</div>   <div class="rb-val" id="r-e">—</div></div>
+  <div class="rb-item"><div class="rb-key">zone</div>        <div class="rb-val" id="r-zone">—</div></div>
+  <div class="rb-item"><div class="rb-key">linear band</div> <div class="rb-val good" id="r-linband">—</div></div>
+  <div class="rb-item"><div class="rb-key">film DR</div>     <div class="rb-val warn" id="r-fdr">—</div></div>
+  <div class="rb-item"><div class="rb-key">well used</div>   <div class="rb-val warn" id="r-pct">—</div></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     KEY NUMBERS
+     ═══════════════════════════════════════════════════════════════════════ -->
+<hr>
+<div class="fact-strip">
+  <div class="fact">
+    <div class="fact-num">~8<em> stops</em></div>
+    <div class="fact-desc">
+      Dynamic range of a color negative (Dmin 0.05 → Dmax 2.26).
+      A 14-bit sensor can capture 12+ stops — leaving ~4 stops of
+      well capacity unused.
+    </div>
+  </div>
+  <div class="fact">
+    <div class="fact-num">1:316</div>
+    <div class="fact-desc">
+      Transmittance ratio across the negative. At Dmax ≈ 2.26,
+      only 0.5% of scanning light passes through — those photons
+      must compete with sensor read noise.
+    </div>
+  </div>
+  <div class="fact">
+    <div class="fact-num">&lt;40<em>%</em></div>
+    <div class="fact-desc">
+      Fraction of the electron well that the linear zone of a
+      color negative occupies. Exposing to use the full well
+      maximises SNR before inversion.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     OBSERVATION NOTES
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div class="notes">
+
+  <div class="note">
+    <div class="note-head">wasted headroom — above Dmin</div>
+    <div class="note-body">
+      Even clear film base blocks some light. Color negative has a
+      base-plus-fog density of roughly <code>0.05</code>, plus the orange mask
+      adds further absorption. This means the scanning illuminant
+      can never fill the sensor well to 16 383 — <strong>the top red band
+      on the right chart is permanently unreachable.</strong> The practical
+      consequence: if you expose the scanner for the sensor's midpoint,
+      you are throwing away dynamic range. Optimal scanning exposure
+      pushes Dmin as close to the sensor ceiling as possible without
+      clipping, maximising the electron count in the usable band.
+    </div>
+  </div>
+
+  <div class="note">
+    <div class="note-head">wasted floor — below Dmax</div>
+    <div class="note-body">
+      At maximum density (deep shadows in the scene, which become
+      the thinnest part of the negative after development),
+      transmittance T = 10<sup>−Dmax</sup> ≈ 0.5%. The sensor receives
+      almost no photons from these areas. <strong>Electron counts near
+      zero are indistinguishable from read noise.</strong> This is why
+      shadow detail in a scanned negative is noisy even with a good
+      scanner — the signal is genuinely tiny, not a software failing.
+      Scanning at a higher ISO equivalent or using a brighter
+      illuminant raises the absolute photon count but cannot change
+      the transmittance ratio.
+    </div>
+  </div>
+
+  <div class="note">
+    <div class="note-head">the linear band — where tonal relationships are preserved</div>
+    <div class="note-body">
+      The green band on the right chart shows which electron counts
+      correspond to the linear portion of the H&D curve. In this
+      region, equal steps in log exposure produce equal steps in
+      density — and therefore a predictable, invertible relationship
+      between scene luminance and sensor signal. <strong>Shadow and
+      highlight detail that falls outside this band (into toe or
+      shoulder) is compressed and cannot be fully recovered by
+      inversion alone.</strong> Notice that for color negative the linear
+      band occupies only a fraction of the already-narrow usable
+      well range — the film's toe and shoulder consume significant
+      stops at both ends.
+    </div>
+  </div>
+
+  <div class="note">
+    <div class="note-head">slide / reversal — more of the well, steeper gamma</div>
+    <div class="note-body">
+      Switch to slide/reversal film. Dmax rises to ~3.0, which means
+      the usable well range widens — more of the 16 383 electrons are
+      put to work. But the curve is inverted (more exposure = less
+      density) and the gamma is steeper (~1.8 vs ~0.65 for negative).
+      <strong>Equal steps in log H produce larger steps in density</strong>, so
+      the toe and shoulder compress more aggressively at both ends.
+      A one-stop scanning error on a reversal film destroys far more
+      tonal information than the same error on a negative — which is
+      why slide scanning has less exposure latitude.
+    </div>
+  </div>
+
+  <div class="note">
+    <div class="note-head">practical implication — expose to the right, then invert</div>
+    <div class="note-body">
+      Because the electron curve is exponential (T = 10<sup>−D</sup>),
+      the relationship between density and electron count is not
+      linear. Equal density steps in the linear zone of the H&D curve
+      produce <em>unequal</em> electron steps — larger at low density
+      (highlights in the negative, shadows in the scene), smaller at
+      high density (shadows in the negative, highlights in the scene).
+      <strong>Scanning software should expose so that Dmin — the film
+      base — lands just below the sensor ceiling.</strong> This packs the
+      maximum number of electrons into the usable band before any
+      inversion or colour correction is applied, giving the highest
+      possible signal-to-noise ratio in the final image.
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     CHART.JS — loaded from CDN, sets window.Chart global
+     ═══════════════════════════════════════════════════════════════════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONSTANTS & THEME
+   ═══════════════════════════════════════════════════════════════════════════ */
+const MAX_DN = 16383;          // 14-bit sensor ceiling (2^14 − 1)
+const dark   = matchMedia('(prefers-color-scheme: dark)').matches;
+const gc     = dark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.06)';  // grid line colour
+const tc     = dark ? '#666' : '#aaa';                                // tick colour
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FILM DATA
+   logH  = log exposure values (x-axis of H&D curve)
+   D     = density values (y-axis of H&D curve), matched point-for-point
+   Dmin  = base-plus-fog density (clear film base)
+   Dmax  = maximum density (fully exposed / developed shadow)
+
+   Transmittance at any density: T = 10^(-D)
+   Dynamic range in stops: (Dmax - Dmin) / 0.3
+     (each stop halves light, i.e. multiplies by 0.5 = 10^(-0.3))
+   ═══════════════════════════════════════════════════════════════════════════ */
+const films = {
+  neg: {
+    logH: [-1.5,-1.0,-0.5, 0, 0.3, 0.6, 0.9, 1.2, 1.5, 1.8, 2.1, 2.4, 2.7, 3.0, 3.3],
+    D:    [0.05,0.06,0.09,0.18,0.35,0.60,0.90,1.20,1.50,1.78,2.00,2.15,2.22,2.25,2.26],
+    Dmin: 0.05,
+    Dmax: 2.26
+    /* ~8.7 stops DR. Orange mask adds ~0.5D baseline across all channels.
+       Gamma ≈ 0.65 in the linear region. */
+  },
+  slide: {
+    logH: [-1.5,-1.0,-0.5, 0, 0.3, 0.6, 0.9, 1.2, 1.5, 1.8, 2.1, 2.4, 2.7, 3.0, 3.3],
+    D:    [3.00,2.95,2.80,2.40,1.95,1.45,1.00,0.65,0.38,0.20,0.10,0.06,0.04,0.03,0.03],
+    Dmin: 0.03,
+    Dmax: 3.00
+    /* Reversal (positive) — curve is inverted: more exposure → lower density.
+       ~9.9 stops DR. Gamma ≈ 1.8. Much less scanning latitude than negative. */
+  },
+  pan: {
+    logH: [-1.5,-1.0,-0.5, 0, 0.3, 0.6, 0.9, 1.2, 1.5, 1.8, 2.1, 2.4, 2.7, 3.0, 3.3],
+    D:    [0.04,0.05,0.10,0.25,0.50,0.80,1.10,1.38,1.60,1.78,1.90,1.96,1.99,2.00,2.00],
+    Dmin: 0.04,
+    Dmax: 2.00
+    /* B&W panchromatic negative. ~6.5 stops DR. No orange mask.
+       Gamma ≈ 0.72. Shoulder is very flat (density saturates early). */
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SHARED MUTABLE STATE
+   All plugins and event handlers read from here — avoids stale closures
+   that broke reactivity in earlier versions.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const state = { film: 'neg', probeT: 45 };
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   UTILITY: linear interpolation along the H&D curve
+   xs, ys  = paired arrays of known (logH, D) values
+   x       = query logH → returns interpolated D
+   ═══════════════════════════════════════════════════════════════════════════ */
+function interp(xs, ys, x) {
+  if (x <= xs[0])               return ys[0];
+  if (x >= xs[xs.length - 1])  return ys[ys.length - 1];
+  for (let i = 0; i < xs.length - 1; i++) {
+    if (x >= xs[i] && x <= xs[i + 1]) {
+      const t = (x - xs[i]) / (xs[i + 1] - xs[i]);
+      return ys[i] + t * (ys[i + 1] - ys[i]);
+    }
+  }
+  return ys[ys.length - 1];
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   UTILITY: convert density D → electron count in the well
+   Physics: T = 10^(-D)
+   Mapping: we normalise T to [Tmin, Tmax] where
+     Tmax = transmittance at Dmin (brightest possible signal)
+     Tmin = transmittance at Dmax (darkest possible signal)
+   This maps the film's actual transmittance range onto the full 0–MAX_DN
+   well, so the electron count reflects the fraction of usable signal.
+   ═══════════════════════════════════════════════════════════════════════════ */
+function DtoE(D, f) {
+  const Tmax = Math.pow(10, -f.Dmin);   // e.g. 10^(-0.05) ≈ 0.891
+  const Tmin = Math.pow(10, -f.Dmax);   // e.g. 10^(-2.26) ≈ 0.0055
+  const T    = Math.pow(10, -D);
+  return Math.max(0, Math.min(MAX_DN,
+    Math.round((T - Tmin) / (Tmax - Tmin) * MAX_DN)
+  ));
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   UTILITY: compute the logH thresholds that define toe / linear / shoulder,
+   and the corresponding D and electron values at those boundaries.
+   The 20% and 78% positions along the logH axis are a visual heuristic
+   that brackets the central linear region for typical film curves.
+   ═══════════════════════════════════════════════════════════════════════════ */
+function getZoneBounds() {
+  const f    = films[state.film];
+  const span = f.logH[f.logH.length - 1] - f.logH[0];
+  const lhToe = f.logH[0] + span * 0.20;   // end of toe
+  const lhSho = f.logH[0] + span * 0.78;   // start of shoulder
+  const DToe  = interp(f.logH, f.D, lhToe);
+  const DSho  = interp(f.logH, f.D, lhSho);
+  return {
+    DToe, DSho,
+    eToe: DtoE(DToe, f),   // electrons at toe/linear boundary
+    eSho: DtoE(DSho, f)    // electrons at linear/shoulder boundary
+  };
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   UTILITY: compute all probe values from current state.probeT (0–100).
+   The probe position maps linearly across the logH range of the film.
+   ═══════════════════════════════════════════════════════════════════════════ */
+function getProbeValues() {
+  const f    = films[state.film];
+  const logH = f.logH[0] + (state.probeT / 100) * (f.logH[f.logH.length - 1] - f.logH[0]);
+  const D    = interp(f.logH, f.D, logH);
+  const T    = Math.pow(10, -D);
+  const e    = DtoE(D, f);
+  return { logH, D, T, e };
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   UTILITY: build the electron-vs-density curve data points for the right chart.
+   Samples density uniformly from 0 to Dmax × 1.08 (small margin beyond Dmax).
+   ═══════════════════════════════════════════════════════════════════════════ */
+function buildElectronCurve() {
+  const f   = films[state.film];
+  const pts = [];
+  for (let i = 0; i <= 160; i++) {
+    const D = (i / 160) * f.Dmax * 1.08;
+    pts.push({ x: +D.toFixed(4), y: DtoE(D, f) });
+  }
+  return pts;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   UTILITY: draw a dashed crosshair + filled dot at (px, py)
+   Used by both probe plugins — extracted to avoid duplication.
+   ═══════════════════════════════════════════════════════════════════════════ */
+function drawCrossHair(ctx, px, py, chartArea) {
+  ctx.save();
+  ctx.strokeStyle = dark ? 'rgba(255,200,80,.75)' : 'rgba(140,70,0,.7)';
+  ctx.lineWidth   = 1;
+  ctx.setLineDash([3, 3]);
+  ctx.globalAlpha = 0.75;
+  ctx.beginPath(); ctx.moveTo(px, chartArea.top);    ctx.lineTo(px, chartArea.bottom); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(chartArea.left, py);   ctx.lineTo(chartArea.right, py);  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = dark ? '#ffcc40' : '#a04800';
+  ctx.beginPath(); ctx.arc(px, py, 5.5, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHART.JS PLUGINS
+   Named singleton objects — NOT factory functions.
+   Factory functions caused stale closures: each slider event created a new
+   plugin object with a new random ID, so Chart.js kept registering new
+   plugins instead of re-running the existing afterDraw hooks.
+   By using named singletons that read from `state`, all updates are reactive.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Left chart: blue / green / orange background zones for toe / linear / shoulder */
+const hdZonePlugin = {
+  id: 'hdZone',
+  beforeDraw(chart) {
+    const { ctx, chartArea, scales } = chart;
+    if (!chartArea) return;
+    const f    = films[state.film];
+    const span = f.logH[f.logH.length - 1] - f.logH[0];
+    const xToe = scales.x.getPixelForValue(f.logH[0] + span * 0.20);
+    const xSho = scales.x.getPixelForValue(f.logH[0] + span * 0.78);
+    const { left, right, top, bottom } = chartArea;
+    ctx.save();
+    ctx.globalAlpha = dark ? 0.12 : 0.15;
+    ctx.fillStyle = '#6090d0'; ctx.fillRect(left,  top, xToe - left,  bottom - top);
+    ctx.fillStyle = '#50a860'; ctx.fillRect(xToe,  top, xSho - xToe,  bottom - top);
+    ctx.fillStyle = '#c87030'; ctx.fillRect(xSho,  top, right - xSho, bottom - top);
+    ctx.restore();
+  }
+};
+
+/* Left chart: probe crosshair — position driven by state.probeT */
+const hdProbePlugin = {
+  id: 'hdProbe',
+  afterDraw(chart) {
+    const { ctx, chartArea, scales } = chart;
+    if (!chartArea) return;
+    const { logH, D } = getProbeValues();
+    drawCrossHair(ctx,
+      scales.x.getPixelForValue(logH),
+      scales.y.getPixelForValue(D),
+      chartArea
+    );
+  }
+};
+
+/* Right chart: multi-band background
+   From top to bottom (high electrons → low electrons):
+     RED   — wasted headroom (above Dmin transmittance ceiling)
+     BLUE  — toe zone electron band
+     GREEN — linear zone electron band  ← the key teaching band
+     AMBER — shoulder zone electron band
+     RED   — wasted floor (below Dmax transmittance floor)
+   Plus dashed boundary lines and text labels.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const wellBandPlugin = {
+  id: 'wellBand',
+  beforeDraw(chart) {
+    const { ctx, chartArea, scales } = chart;
+    if (!chartArea) return;
+    const f  = films[state.film];
+    const zb = getZoneBounds();
+    const { left, right, top, bottom } = chartArea;
+    const w  = right - left;
+
+    /* pixel y-positions for each boundary */
+    const yFloor = scales.y.getPixelForValue(0);
+    const yCeil  = scales.y.getPixelForValue(MAX_DN);
+    const yDmin  = scales.y.getPixelForValue(DtoE(f.Dmin, f));  // Dmin → max reachable electrons
+    const yDmax  = scales.y.getPixelForValue(DtoE(f.Dmax, f));  // Dmax → min reachable electrons
+    const yToe   = scales.y.getPixelForValue(zb.eToe);           // toe / linear boundary
+    const ySho   = scales.y.getPixelForValue(zb.eSho);           // linear / shoulder boundary
+
+    /* filled bands */
+    ctx.save();
+    ctx.globalAlpha = dark ? 0.16 : 0.20;
+    ctx.fillStyle = '#c04040';                                    // wasted headroom
+    ctx.fillRect(left, yCeil,  w, yDmin - yCeil);
+    ctx.fillStyle = '#c04040';                                    // wasted floor
+    ctx.fillRect(left, yDmax,  w, yFloor - yDmax);
+    ctx.globalAlpha = dark ? 0.14 : 0.17;
+    ctx.fillStyle = '#6090d0'; ctx.fillRect(left, yDmin, w, yToe  - yDmin);  // toe band
+    ctx.fillStyle = '#50a860'; ctx.fillRect(left, yToe,  w, ySho  - yToe);   // linear band
+    ctx.fillStyle = '#c87030'; ctx.fillRect(left, ySho,  w, yDmax - ySho);   // shoulder band
+    ctx.restore();
+
+    /* dashed boundary lines */
+    ctx.save();
+    ctx.lineWidth = 1;
+    ctx.setLineDash([5, 4]);
+    ctx.globalAlpha = 0.55;
+    ctx.strokeStyle = dark ? '#d06060' : '#aa2020';              // Dmin / Dmax limits
+    ctx.beginPath(); ctx.moveTo(left, yDmin); ctx.lineTo(right, yDmin); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(left, yDmax); ctx.lineTo(right, yDmax); ctx.stroke();
+    ctx.strokeStyle = dark ? '#8aabdd' : '#4070b0';              // zone boundaries
+    ctx.beginPath(); ctx.moveTo(left, yToe);  ctx.lineTo(right, yToe);  ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(left, ySho);  ctx.lineTo(right, ySho);  ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+
+    /* text labels — only drawn if band is tall enough to fit */
+    const font = '10px monospace';
+    ctx.save();
+    ctx.font    = font;
+    ctx.globalAlpha = 0.85;
+
+    ctx.fillStyle = dark ? '#d08080' : '#992020';
+    ctx.fillText('headroom', left + 5, yCeil + 13);
+    ctx.fillText('floor',    left + 5, yFloor - 4);
+
+    if (yToe - yDmin > 14) {
+      ctx.fillStyle = dark ? '#7090cc' : '#3055a0';
+      ctx.fillText('toe', left + 5, (yDmin + yToe) / 2 + 4);
+    }
+    if (ySho - yToe > 14) {
+      ctx.fillStyle = dark ? '#60c080' : '#1a7a3a';
+      ctx.fillText('linear', left + 5, (yToe + ySho) / 2 + 4);
+    }
+    if (yDmax - ySho > 14) {
+      ctx.fillStyle = dark ? '#d09050' : '#a05010';
+      ctx.fillText('shoulder', left + 5, (ySho + yDmax) / 2 + 4);
+    }
+    ctx.restore();
+  }
+};
+
+/* Right chart: probe crosshair — same state.probeT, mapped to density → electrons */
+const wellProbePlugin = {
+  id: 'wellProbe',
+  afterDraw(chart) {
+    const { ctx, chartArea, scales } = chart;
+    if (!chartArea) return;
+    const { D, e } = getProbeValues();
+    drawCrossHair(ctx,
+      scales.x.getPixelForValue(D),
+      scales.y.getPixelForValue(e),
+      chartArea
+    );
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHART INSTANCES
+   hdChart   — left, H&D curve
+   wellChart — right, electron well curve
+   Both are destroyed and rebuilt when the film type changes (because axis
+   ranges change). Probe updates use chart.update('none') — no animation,
+   no data rebuild, just re-runs the plugin hooks.
+   ═══════════════════════════════════════════════════════════════════════════ */
+let hdChart = null, wellChart = null;
+
+function buildHD() {
+  const f   = films[state.film];
+  const ctx = document.getElementById('c-hd');
+  if (hdChart) { hdChart.destroy(); hdChart = null; }
+  hdChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      datasets: [{
+        data:        f.logH.map((h, i) => ({ x: h, y: f.D[i] })),
+        borderColor: dark ? '#bbbbbb' : '#333333',
+        borderWidth: 2,
+        fill:        false,
+        pointRadius: 0,
+        tension:     0.4
+      }]
+    },
+    options: {
+      responsive:          true,
+      maintainAspectRatio: false,
+      animation:           false,
+      parsing:             false,
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      scales: {
+        x: {
+          type:  'linear',
+          min:   f.logH[0],
+          max:   f.logH[f.logH.length - 1],
+          title: { display: true, text: 'log H', font: { size: 10 }, color: tc },
+          grid:  { color: gc },
+          ticks: { color: tc, font: { size: 10 }, maxTicksLimit: 7 }
+        },
+        y: {
+          min:   0,
+          max:   3.4,
+          title: { display: true, text: 'density D', font: { size: 10 }, color: tc },
+          grid:  { color: gc },
+          ticks: { color: tc, font: { size: 10 }, stepSize: 0.5 }
+        }
+      }
+    },
+    plugins: [hdZonePlugin, hdProbePlugin]
+  });
+}
+
+function buildWell() {
+  const f   = films[state.film];
+  const ctx = document.getElementById('c-well');
+  if (wellChart) { wellChart.destroy(); wellChart = null; }
+  wellChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      datasets: [{
+        data:        buildElectronCurve(),
+        borderColor: dark ? 'rgba(200,200,200,.42)' : 'rgba(60,60,60,.30)',
+        borderWidth: 1.5,
+        fill:        false,
+        pointRadius: 0,
+        tension:     0.3
+      }]
+    },
+    options: {
+      responsive:          true,
+      maintainAspectRatio: false,
+      animation:           false,
+      parsing:             false,
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      scales: {
+        x: {
+          type:  'linear',
+          min:   0,
+          max:   f.Dmax * 1.08,
+          title: { display: true, text: 'density D', font: { size: 10 }, color: tc },
+          grid:  { color: gc },
+          ticks: {
+            color:        tc,
+            font:         { size: 10 },
+            maxTicksLimit: 7,
+            callback:     v => v.toFixed(1)
+          }
+        },
+        y: {
+          min:   0,
+          max:   MAX_DN + 500,
+          title: { display: true, text: 'electrons', font: { size: 10 }, color: tc },
+          grid:  { color: gc },
+          ticks: {
+            color:        tc,
+            font:         { size: 10 },
+            maxTicksLimit: 7,
+            callback:     v => v >= 1000 ? Math.round(v / 1000) + 'k' : v
+          }
+        }
+      }
+    },
+    plugins: [wellBandPlugin, wellProbePlugin]
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   READOUT UPDATE
+   Called after every slider move or film switch.
+   Reads from state, computes derived values, pushes to DOM, then triggers
+   chart.update('none') on both charts to re-run the plugin afterDraw hooks.
+   ═══════════════════════════════════════════════════════════════════════════ */
+function updateReadouts() {
+  const { logH, D, T, e } = getProbeValues();
+  const f    = films[state.film];
+  const zb   = getZoneBounds();
+  const span = f.logH[f.logH.length - 1] - f.logH[0];
+
+  /* zone classification */
+  let zoneName = 'linear', zoneColor = '#3a9a5c';
+  if      (logH < f.logH[0] + span * 0.20) { zoneName = 'toe';      zoneColor = '#5b8dd9'; }
+  else if (logH > f.logH[0] + span * 0.78) { zoneName = 'shoulder'; zoneColor = '#c87533'; }
+
+  /* derived metrics */
+  const filmStops = (f.Dmax - f.Dmin) / 0.3;
+  const pctUsed   = (DtoE(f.Dmin, f) - DtoE(f.Dmax, f)) / MAX_DN * 100;
+
+  /* push to DOM */
+  document.getElementById('probe-val').textContent   = 'logH ' + logH.toFixed(2);
+  document.getElementById('r-logh').textContent      = logH.toFixed(2);
+  document.getElementById('r-d').textContent         = D.toFixed(3);
+  document.getElementById('r-t').textContent         = (T * 100).toFixed(2) + '%';
+  document.getElementById('r-e').textContent         = e.toLocaleString();
+  const zEl = document.getElementById('r-zone');
+  zEl.textContent = zoneName; zEl.style.color = zoneColor;
+  /* linear band: eSho (shoulder boundary, lower electrons) to eToe (toe boundary, higher electrons) */
+  document.getElementById('r-linband').textContent   = zb.eSho.toLocaleString() + ' – ' + zb.eToe.toLocaleString() + ' e⁻';
+  document.getElementById('r-fdr').textContent       = filmStops.toFixed(1) + ' stops';
+  document.getElementById('r-pct').textContent       = pctUsed.toFixed(1) + '% of well';
+}
+
+function redraw() {
+  updateReadouts();
+  if (hdChart)   hdChart.update('none');
+  if (wellChart) wellChart.update('none');
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EVENT WIRING
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Slider → update probe position in state, redraw without rebuilding charts */
+document.getElementById('probe').addEventListener('input', function () {
+  state.probeT = parseInt(this.value);
+  redraw();
+});
+
+/* Film selector → update film in state, rebuild both charts, redraw */
+document.querySelectorAll('.fs-btn').forEach(btn => {
+  btn.addEventListener('click', function () {
+    document.querySelectorAll('.fs-btn').forEach(b => b.classList.remove('on'));
+    this.classList.add('on');
+    state.film = this.dataset.film;
+    buildHD();
+    buildWell();
+    redraw();
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   INITIAL RENDER
+   ═══════════════════════════════════════════════════════════════════════════ */
+buildHD();
+buildWell();
+redraw();
+</script>
+</body>
+</html>

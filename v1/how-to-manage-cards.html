@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Managing cards · film4ever.html · VLADS TEST TARGET</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400;500&family=Instrument+Serif:ital@0;1&family=Nunito:wght@800&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --vtt-paper:      #f5f2ec;
+  --vtt-surface:    #ede9e1;
+  --vtt-surface2:   #e6e2d8;
+  --vtt-ink:        #1a1814;
+  --vtt-ink2:       #4a4640;
+  --vtt-ink3:       #8a8480;
+  --vtt-rule:       rgba(26,24,20,.13);
+  --vtt-accent:     #c8401a;
+  --vtt-accent-dim: rgba(200,64,26,.22);
+  --vtt-mono:       'DM Mono','Menlo','Courier New',monospace;
+  --vtt-serif:      'Instrument Serif',Georgia,serif;
+  --vtt-sans:       'DM Sans',system-ui,sans-serif;
+  --vtt-rounded:    'Arial Rounded MT Bold','Arial Rounded MT','Nunito','Varela Round',sans-serif;
+  --vtt-code-bg:    #e8e4dc;
+  --vtt-code-bg-d:  #2a2826;
+}
+
+html, body {
+  background:  var(--vtt-paper);
+  color:       var(--vtt-ink);
+  font-family: var(--vtt-sans);
+  font-weight: 300;
+  margin:      0;
+}
+body { max-width: 860px; margin: 0 auto; padding-bottom: 60px; }
+
+/* ── page header ─────────────────────────────────────────────────────────── */
+.page-header {
+  padding: 32px 28px 28px;
+  border-bottom: 0.5px solid var(--vtt-rule);
+}
+.eyebrow {
+  font-family:    var(--vtt-mono);
+  font-size:      10px;
+  letter-spacing: .14em;
+  color:          var(--vtt-accent);
+  text-transform: uppercase;
+  margin-bottom:  10px;
+}
+h1 {
+  font-family:   var(--vtt-serif);
+  font-size:     28px;
+  font-weight:   400;
+  line-height:   1.2;
+  margin-bottom: 6px;
+}
+h1 em { font-style: italic; color: var(--vtt-ink3); }
+.subtitle {
+  font-size:   14px;
+  color:       var(--vtt-ink2);
+  line-height: 1.65;
+  max-width:   580px;
+}
+
+/* ── content area ─────────────────────────────────────────────────────────── */
+.content { padding: 0 28px; }
+
+/* ── section headings ────────────────────────────────────────────────────── */
+.sec-rule {
+  margin:      32px 0 22px;
+  border:      none;
+  border-top:  0.5px solid var(--vtt-rule);
+  position:    relative;
+}
+.sec-label {
+  font-family:    var(--vtt-mono);
+  font-size:      10px;
+  font-weight:    500;
+  letter-spacing: .12em;
+  color:          var(--vtt-ink3);
+  text-transform: uppercase;
+  margin-bottom:  16px;
+  margin-top:     28px;
+  display:        flex;
+  align-items:    center;
+  gap:            12px;
+}
+.sec-label::after {
+  content:    '';
+  flex:       1;
+  height:     0.5px;
+  background: var(--vtt-rule);
+}
+
+/* ── prose ───────────────────────────────────────────────────────────────── */
+.prose {
+  font-size:   14px;
+  color:       var(--vtt-ink2);
+  line-height: 1.72;
+  max-width:   640px;
+  margin-bottom: 18px;
+}
+.prose strong { color: var(--vtt-ink); font-weight: 500; }
+.prose code {
+  font-family: var(--vtt-mono);
+  font-size:   12px;
+  background:  var(--vtt-code-bg);
+  padding:     1px 5px;
+  border-radius: 3px;
+  color:       var(--vtt-ink);
+}
+
+/* ── operation cards ─────────────────────────────────────────────────────── */
+.op-grid {
+  display:               grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap:                   10px;
+  margin-bottom:         10px;
+}
+.op-card {
+  background:    var(--vtt-surface);
+  border:        0.5px solid var(--vtt-rule);
+  border-radius: 8px;
+  overflow:      hidden;
+}
+.op-card.full { grid-column: 1 / -1; }
+.op-head {
+  padding:        12px 16px 10px;
+  border-bottom:  0.5px solid var(--vtt-rule);
+  display:        flex;
+  align-items:    center;
+  gap:            10px;
+}
+.op-badge {
+  font-family:    var(--vtt-mono);
+  font-size:      9px;
+  font-weight:    500;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding:        2px 8px;
+  border-radius:  3px;
+  flex-shrink:    0;
+  white-space:    nowrap;
+}
+.op-badge.add    { background: rgba(60,160,80,.14); color: #2a7a3a; border: 0.5px solid rgba(60,160,80,.3); }
+.op-badge.edit   { background: rgba(60,100,200,.12); color: #2a4a9a; border: 0.5px solid rgba(60,100,200,.3); }
+.op-badge.remove { background: rgba(200,64,26,.12);  color: #8a2810; border: 0.5px solid rgba(200,64,26,.3); }
+.op-badge.promote{ background: rgba(160,110,0,.14);  color: #7a5200; border: 0.5px solid rgba(160,110,0,.3); }
+.op-title {
+  font-size:   14px;
+  font-weight: 500;
+  color:       var(--vtt-ink);
+}
+.op-body { padding: 14px 16px; }
+.op-desc {
+  font-size:     13px;
+  color:         var(--vtt-ink2);
+  line-height:   1.6;
+  margin-bottom: 12px;
+}
+.op-desc code {
+  font-family:   var(--vtt-mono);
+  font-size:     11px;
+  background:    var(--vtt-code-bg);
+  padding:       1px 5px;
+  border-radius: 3px;
+  color:         var(--vtt-ink);
+}
+
+/* ── step list ───────────────────────────────────────────────────────────── */
+.steps {
+  display:        flex;
+  flex-direction: column;
+  gap:            6px;
+}
+.step {
+  display:     flex;
+  gap:         10px;
+  align-items: flex-start;
+  font-size:   13px;
+  color:       var(--vtt-ink2);
+  line-height: 1.5;
+}
+.step-n {
+  font-family:    var(--vtt-mono);
+  font-size:      10px;
+  font-weight:    500;
+  color:          var(--vtt-accent);
+  background:     var(--vtt-accent-dim);
+  border-radius:  3px;
+  padding:        1px 6px;
+  flex-shrink:    0;
+  margin-top:     1px;
+  min-width:      22px;
+  text-align:     center;
+}
+.step code {
+  font-family:   var(--vtt-mono);
+  font-size:     11px;
+  background:    var(--vtt-code-bg);
+  padding:       1px 5px;
+  border-radius: 3px;
+  color:         var(--vtt-ink);
+}
+.step strong { color: var(--vtt-ink); font-weight: 500; }
+
+/* ── code block ──────────────────────────────────────────────────────────── */
+.code-block {
+  background:    var(--vtt-code-bg);
+  border:        0.5px solid var(--vtt-rule);
+  border-left:   2px solid var(--vtt-accent);
+  border-radius: 4px;
+  padding:       14px 16px;
+  margin:        12px 0 4px;
+  overflow-x:    auto;
+}
+.code-block pre {
+  font-family: var(--vtt-mono);
+  font-size:   12px;
+  line-height: 1.65;
+  color:       var(--vtt-ink);
+  white-space: pre;
+}
+.code-block .hl  { color: var(--vtt-accent); }     /* accent — changed parts */
+.code-block .dim { color: var(--vtt-ink3); }        /* dimmed — unchanged context */
+.code-caption {
+  font-family:    var(--vtt-mono);
+  font-size:      10px;
+  color:          var(--vtt-ink3);
+  margin-bottom:  4px;
+  letter-spacing: .04em;
+}
+
+/* ── quick-ref table ─────────────────────────────────────────────────────── */
+.ref-table {
+  width:           100%;
+  border-collapse: collapse;
+  border:          0.5px solid var(--vtt-rule);
+  border-radius:   8px;
+  overflow:        hidden;
+  font-size:       13px;
+  margin-bottom:   4px;
+}
+.ref-table th {
+  font-family:    var(--vtt-mono);
+  font-size:      9px;
+  font-weight:    500;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color:          var(--vtt-ink3);
+  background:     var(--vtt-surface2);
+  padding:        9px 14px;
+  text-align:     left;
+  border-bottom:  0.5px solid var(--vtt-rule);
+}
+.ref-table td {
+  padding:       9px 14px;
+  border-bottom: 0.5px solid var(--vtt-rule);
+  color:         var(--vtt-ink2);
+  vertical-align: top;
+}
+.ref-table tr:last-child td { border-bottom: none; }
+.ref-table tr:nth-child(even) td { background: var(--vtt-surface); }
+.ref-table code {
+  font-family:   var(--vtt-mono);
+  font-size:     11px;
+  background:    var(--vtt-code-bg);
+  padding:       1px 5px;
+  border-radius: 3px;
+  color:         var(--vtt-ink);
+}
+.ref-table .pill {
+  display:        inline-block;
+  font-family:    var(--vtt-mono);
+  font-size:      9px;
+  font-weight:    500;
+  letter-spacing: .06em;
+  padding:        1px 7px;
+  border-radius:  3px;
+}
+.pill-add  { background: rgba(60,160,80,.14); color: #2a7a3a; }
+.pill-edit { background: rgba(60,100,200,.12); color: #2a4a9a; }
+.pill-rem  { background: rgba(200,64,26,.12);  color: #8a2810; }
+
+/* ── callout / note box ──────────────────────────────────────────────────── */
+.callout {
+  border-left:   2px solid var(--vtt-rule);
+  padding:       10px 0 10px 16px;
+  margin:        16px 0;
+}
+.callout.tip   { border-color: #3a9a5c; }
+.callout.warn  { border-color: var(--vtt-accent); }
+.callout-head {
+  font-family:    var(--vtt-mono);
+  font-size:      10px;
+  font-weight:    500;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  margin-bottom:  4px;
+}
+.callout.tip  .callout-head { color: #3a9a5c; }
+.callout.warn .callout-head { color: var(--vtt-accent); }
+.callout-body {
+  font-size:   13px;
+  color:       var(--vtt-ink2);
+  line-height: 1.6;
+}
+.callout-body code {
+  font-family:   var(--vtt-mono);
+  font-size:     11px;
+  background:    var(--vtt-code-bg);
+  padding:       1px 5px;
+  border-radius: 3px;
+  color:         var(--vtt-ink);
+}
+
+/* ── footer ──────────────────────────────────────────────────────────────── */
+.site-footer {
+  margin-top:  48px;
+  border-top:  0.5px solid var(--vtt-rule);
+  padding:     18px 28px 26px;
+  background:  var(--vtt-surface);
+}
+.footer-top {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  gap:             16px;
+  margin-bottom:   12px;
+  flex-wrap:       wrap;
+}
+.footer-brand {
+  font-family:    var(--vtt-rounded);
+  font-weight:    800;
+  font-size:      13px;
+  letter-spacing: .01em;
+  color:          var(--vtt-ink);
+}
+.footer-links { display: flex; gap: 6px; flex-wrap: wrap; }
+.footer-links a {
+  font-family:     var(--vtt-mono);
+  font-size:       10px;
+  color:           var(--vtt-ink2);
+  text-decoration: none;
+  padding:         3px 9px;
+  border:          0.5px solid var(--vtt-rule);
+  border-radius:   3px;
+  white-space:     nowrap;
+  transition:      color .12s;
+}
+.footer-links a:hover { color: var(--vtt-ink); }
+.footer-links a.back  { color: var(--vtt-accent); border-color: var(--vtt-accent-dim); }
+.footer-rule {
+  border:     none;
+  border-top: 0.5px solid rgba(26,24,20,.10);
+  margin:     0 0 10px;
+}
+.footer-bottom {
+  display:         flex;
+  justify-content: space-between;
+  align-items:     center;
+  flex-wrap:       wrap;
+  gap:             8px;
+}
+.footer-copy {
+  font-family:    var(--vtt-mono);
+  font-size:      10px;
+  color:          var(--vtt-ink3);
+  letter-spacing: .04em;
+}
+
+/* ── responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 560px) {
+  .op-grid { grid-template-columns: 1fr; }
+  .op-card.full { grid-column: auto; }
+}
+</style>
+
+<script src="vtt-branding.js" defer></script>
+</head>
+<body>
+
+<div id="vtt-header-mount"></div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     PAGE HEADER
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div class="page-header">
+  <p class="eyebrow">film4ever.html &nbsp;·&nbsp; editorial guide</p>
+  <h1>Managing cards <em>on the front page</em></h1>
+  <p class="subtitle">
+    Cards are plain HTML blocks in <code>film4ever.html</code> — no CMS, no build step.
+    Open the file in any text editor, find the block you want to change, edit and save.
+    This page explains every operation with the exact HTML patterns to use.
+  </p>
+</div>
+
+<div class="content">
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       ANATOMY
+       ══════════════════════════════════════════════════════════════════════ -->
+  <div class="sec-label">card anatomy</div>
+
+  <p class="prose">
+    Every card on the front page is one self-contained HTML block. Published cards use
+    <code>&lt;a&gt;</code> (a link); coming-soon cards use <code>&lt;div&gt;</code>
+    (not clickable). Both share the same internal structure — four editable parts.
+  </p>
+
+  <div class="code-caption">published card — full structure</div>
+  <div class="code-block"><pre><span class="dim">&lt;!-- 1. outer element: &lt;a&gt; for published, &lt;div&gt; for coming-soon --&gt;</span>
+<span class="hl">&lt;a class="graph-card" href="graphN.html"&gt;</span>
+
+  &lt;div class="card-head"&gt;
+    &lt;div&gt;
+      <span class="hl">&lt;div class="card-id"&gt;graph N&lt;/div&gt;</span>          <span class="dim">&lt;!-- 2. id label --&gt;</span>
+      <span class="hl">&lt;div class="card-title"&gt;Title &lt;em&gt;&amp;rarr;&lt;/em&gt; Subtitle&lt;/div&gt;</span>  <span class="dim">&lt;!-- 3. title --&gt;</span>
+    &lt;/div&gt;
+    &lt;div class="card-arrow"&gt;&amp;rarr;&lt;/div&gt;   <span class="dim">&lt;!-- arrow (published only) --&gt;</span>
+  &lt;/div&gt;
+
+  &lt;div class="card-body"&gt;
+    <span class="hl">&lt;p class="card-desc"&gt;Description text here.&lt;/p&gt;</span>   <span class="dim">&lt;!-- 4. description --&gt;</span>
+    &lt;div class="card-tags"&gt;
+      <span class="hl">&lt;span class="tag"&gt;concept one&lt;/span&gt;</span>         <span class="dim">&lt;!-- 5. tags --&gt;</span>
+      <span class="hl">&lt;span class="tag"&gt;concept two&lt;/span&gt;</span>
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+<span class="hl">&lt;/a&gt;</span></pre></div>
+
+  <div class="callout tip">
+    <div class="callout-head">tip — italic arrows in titles</div>
+    <div class="callout-body">Use <code>&lt;em&gt;&amp;rarr;&lt;/em&gt;</code> between concepts in the title to get the styled italic arrow: <em>→</em>. Use <code>&amp;amp;</code> for an ampersand.</div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       OPERATIONS
+       ══════════════════════════════════════════════════════════════════════ -->
+  <div class="sec-label">operations</div>
+
+  <div class="op-grid">
+
+    <!-- ADD PUBLISHED -->
+    <div class="op-card">
+      <div class="op-head">
+        <span class="op-badge add">Add</span>
+        <span class="op-title">Add a published card</span>
+      </div>
+      <div class="op-body">
+        <p class="op-desc">Copy the block below and paste it inside the <code>.cards-grid</code> div under the <strong>published</strong> <code>&lt;section&gt;</code>. Edit the five highlighted parts.</p>
+        <div class="steps">
+          <div class="step"><span class="step-n">1</span>Find the comment <code>&lt;!-- published --&gt;</code> in film4ever.html</div>
+          <div class="step"><span class="step-n">2</span>Paste a new <code>&lt;a class="graph-card"&gt;</code> block inside its <code>.cards-grid</code></div>
+          <div class="step"><span class="step-n">3</span>Set <code>href</code>, <code>card-id</code>, <code>card-title</code>, <code>card-desc</code>, and <code>tag</code> spans</div>
+          <div class="step"><span class="step-n">4</span>Save — grid lays out automatically, two columns</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADD COMING SOON -->
+    <div class="op-card">
+      <div class="op-head">
+        <span class="op-badge add">Add</span>
+        <span class="op-title">Add a coming-soon card</span>
+      </div>
+      <div class="op-body">
+        <p class="op-desc">Same structure but three differences: outer tag is <code>&lt;div&gt;</code>, add class <code>soon</code>, replace the arrow with a badge.</p>
+        <div class="code-caption">coming-soon card — differences only</div>
+        <div class="code-block"><pre><span class="hl">&lt;div</span> class="graph-card <span class="hl">soon</span>"&gt;
+  &lt;div class="card-head"&gt;
+    &lt;div&gt;
+      &lt;div class="card-id"&gt;graph N&lt;/div&gt;
+      &lt;div class="card-title"&gt;...&lt;/div&gt;
+    &lt;/div&gt;
+    <span class="hl">&lt;span class="soon-badge"&gt;soon&lt;/span&gt;</span>
+  &lt;/div&gt;
+  &lt;div class="card-body"&gt;...&lt;/div&gt;
+<span class="hl">&lt;/div&gt;</span></pre></div>
+      </div>
+    </div>
+
+    <!-- PROMOTE -->
+    <div class="op-card">
+      <div class="op-head">
+        <span class="op-badge promote">Promote</span>
+        <span class="op-title">Promote coming-soon → published</span>
+      </div>
+      <div class="op-body">
+        <p class="op-desc">When a graph page is ready to publish, four edits turn its coming-soon card into a live published card.</p>
+        <div class="steps">
+          <div class="step"><span class="step-n">1</span>Change opening tag: <code>&lt;div class="graph-card soon"&gt;</code> → <code>&lt;a class="graph-card" href="graphN.html"&gt;</code></div>
+          <div class="step"><span class="step-n">2</span>Change closing tag: <code>&lt;/div&gt;</code> → <code>&lt;/a&gt;</code></div>
+          <div class="step"><span class="step-n">3</span>Replace <code>&lt;span class="soon-badge"&gt;soon&lt;/span&gt;</code> with <code>&lt;div class="card-arrow"&gt;&amp;rarr;&lt;/div&gt;</code></div>
+          <div class="step"><span class="step-n">4</span>Cut the whole block from the <strong>coming soon</strong> section and paste it into the <strong>published</strong> section's <code>.cards-grid</code></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REMOVE -->
+    <div class="op-card">
+      <div class="op-head">
+        <span class="op-badge remove">Remove</span>
+        <span class="op-title">Remove a card</span>
+      </div>
+      <div class="op-body">
+        <p class="op-desc">Delete the entire block — from the opening tag to its matching closing tag. The grid reflows automatically.</p>
+        <div class="steps">
+          <div class="step"><span class="step-n">1</span>Find the card by its <code>card-id</code> text (e.g. "graph 3")</div>
+          <div class="step"><span class="step-n">2</span>Select from <code>&lt;a class="graph-card"</code> (or <code>&lt;div class="graph-card</code>) all the way to the matching <code>&lt;/a&gt;</code> or <code>&lt;/div&gt;</code></div>
+          <div class="step"><span class="step-n">3</span>Delete — remaining cards fill the grid</div>
+        </div>
+        <div class="callout warn" style="margin-top:12px;">
+          <div class="callout-head">watch for nesting</div>
+          <div class="callout-body">Each card contains multiple nested <code>&lt;div&gt;</code> tags. Make sure you delete from the outermost opening tag to the outermost closing tag, not just an inner one.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EDIT FIELDS -->
+    <div class="op-card full">
+      <div class="op-head">
+        <span class="op-badge edit">Edit</span>
+        <span class="op-title">Edit card content — field by field</span>
+      </div>
+      <div class="op-body">
+        <table class="ref-table">
+          <thead>
+            <tr>
+              <th>Field</th>
+              <th>Class / element</th>
+              <th>Notes</th>
+              <th>Operation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Link target</strong></td>
+              <td><code>href="..."</code> on the <code>&lt;a&gt;</code></td>
+              <td>Filename of the graph page, e.g. <code>graph1.html</code></td>
+              <td><span class="pill pill-edit">edit</span></td>
+            </tr>
+            <tr>
+              <td><strong>ID label</strong></td>
+              <td><code>.card-id</code></td>
+              <td>Short identifier shown in accent red above the title. E.g. <code>graph 1</code></td>
+              <td><span class="pill pill-edit">edit</span></td>
+            </tr>
+            <tr>
+              <td><strong>Title</strong></td>
+              <td><code>.card-title</code></td>
+              <td>Use <code>&lt;em&gt;&amp;rarr;&lt;/em&gt;</code> for italic arrows between concepts</td>
+              <td><span class="pill pill-edit">edit</span></td>
+            </tr>
+            <tr>
+              <td><strong>Description</strong></td>
+              <td><code>.card-desc</code></td>
+              <td>2–3 sentences. Keep under ~180 characters for visual consistency</td>
+              <td><span class="pill pill-edit">edit</span></td>
+            </tr>
+            <tr>
+              <td><strong>Tags</strong></td>
+              <td><code>&lt;span class="tag"&gt;</code></td>
+              <td>Each tag is independent. Add or remove any number — they wrap automatically</td>
+              <td><span class="pill pill-add">add</span> <span class="pill pill-rem">remove</span> <span class="pill pill-edit">edit</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /op-grid -->
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       LAYOUT CONTROL
+       ══════════════════════════════════════════════════════════════════════ -->
+  <div class="sec-label">layout control</div>
+
+  <p class="prose">The grid is always two columns. Cards fill left-to-right, top-to-bottom. An odd number of cards leaves the last one in the left column. No configuration needed — it is automatic.</p>
+
+  <div class="op-grid">
+
+    <div class="op-card">
+      <div class="op-head">
+        <span class="op-badge edit">Layout</span>
+        <span class="op-title">Make a card span both columns</span>
+      </div>
+      <div class="op-body">
+        <p class="op-desc">Add an inline style to the card's opening tag. Useful for a featured or intro card at the top of a section.</p>
+        <div class="code-block"><pre>&lt;a class="graph-card"
+   href="graphN.html"
+   <span class="hl">style="grid-column: 1 / -1"</span>&gt;</pre></div>
+      </div>
+    </div>
+
+    <div class="op-card">
+      <div class="op-head">
+        <span class="op-badge add">Layout</span>
+        <span class="op-title">Add a new section</span>
+      </div>
+      <div class="op-body">
+        <p class="op-desc">Sections (published, coming soon) are <code>&lt;section class="series-section"&gt;</code> blocks. Copy one and change the label text.</p>
+        <div class="code-block"><pre><span class="hl">&lt;section class="series-section"&gt;</span>
+  &lt;div class="section-label"&gt;<span class="hl">your label</span>&lt;/div&gt;
+  &lt;div class="cards-grid"&gt;
+    <span class="dim">&lt;!-- cards go here --&gt;</span>
+  &lt;/div&gt;
+<span class="hl">&lt;/section&gt;</span></pre></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       QUICK REFERENCE
+       ══════════════════════════════════════════════════════════════════════ -->
+  <div class="sec-label">quick reference — class names</div>
+
+  <table class="ref-table">
+    <thead>
+      <tr>
+        <th>Class</th>
+        <th>Element</th>
+        <th>Purpose</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><code>graph-card</code></td><td><code>&lt;a&gt;</code> or <code>&lt;div&gt;</code></td><td>Outer wrapper for any card</td></tr>
+      <tr><td><code>graph-card soon</code></td><td><code>&lt;div&gt;</code></td><td>Coming-soon card — dimmed, not clickable</td></tr>
+      <tr><td><code>card-head</code></td><td><code>&lt;div&gt;</code></td><td>Top section of card containing id + title + arrow/badge</td></tr>
+      <tr><td><code>card-id</code></td><td><code>&lt;div&gt;</code></td><td>Accent-coloured label above the title</td></tr>
+      <tr><td><code>card-title</code></td><td><code>&lt;div&gt;</code></td><td>Serif display title. Wrap with <code>&lt;em&gt;</code> for italic portions</td></tr>
+      <tr><td><code>card-arrow</code></td><td><code>&lt;div&gt;</code></td><td>Right-side arrow on published cards. Contains <code>&amp;rarr;</code></td></tr>
+      <tr><td><code>soon-badge</code></td><td><code>&lt;span&gt;</code></td><td>Right-side "soon" label on coming-soon cards. Replaces arrow</td></tr>
+      <tr><td><code>card-body</code></td><td><code>&lt;div&gt;</code></td><td>Lower section containing description + tags</td></tr>
+      <tr><td><code>card-desc</code></td><td><code>&lt;p&gt;</code></td><td>Description paragraph</td></tr>
+      <tr><td><code>card-tags</code></td><td><code>&lt;div&gt;</code></td><td>Container for concept tags</td></tr>
+      <tr><td><code>tag</code></td><td><code>&lt;span&gt;</code></td><td>Individual concept tag pill</td></tr>
+      <tr><td><code>cards-grid</code></td><td><code>&lt;div&gt;</code></td><td>Two-column grid container. Place cards directly inside this</td></tr>
+      <tr><td><code>series-section</code></td><td><code>&lt;section&gt;</code></td><td>Section wrapper with consistent padding</td></tr>
+      <tr><td><code>section-label</code></td><td><code>&lt;div&gt;</code></td><td>Section heading with auto rule line on the right</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout tip" style="margin-top:20px;">
+    <div class="callout-head">tip — testing locally</div>
+    <div class="callout-body">
+      The <code>vtt-branding.js</code> loader uses <code>fetch()</code> which requires HTTP — it won't run when you double-click an HTML file. To preview locally, run <code>python3 -m http.server 8000</code> in the folder and open <code>localhost:8000/film4ever.html</code> in your browser.
+    </div>
+  </div>
+
+</div><!-- /content -->
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     FOOTER
+     ═══════════════════════════════════════════════════════════════════════ -->
+<footer class="site-footer">
+  <div class="footer-top">
+    <div class="footer-brand">VLADS TEST TARGET</div>
+    <div class="footer-links">
+      <a href="film4ever.html" class="back">← series index</a>
+      <a href="https://www.film4ever.info/home" target="_blank" rel="noopener">film4ever.info</a>
+      <a href="https://medium.com/@vladstesttarget" target="_blank" rel="noopener">medium / @vladstesttarget</a>
+    </div>
+  </div>
+  <hr class="footer-rule">
+  <div class="footer-bottom">
+    <div class="footer-copy">&copy; <script>document.write(new Date().getFullYear())</script> VLADS TEST TARGET &nbsp;&middot;&nbsp; for educational use</div>
+  </div>
+</footer>
+
+</body>
+</html>

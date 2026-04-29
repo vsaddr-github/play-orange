@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>graph2 — electron count · display brightness · gamma</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:     #ffffff;
+  --bg2:    #f5f4f1;
+  --bg3:    #eeedea;
+  --border: rgba(0,0,0,.11);
+  --text:   #1a1a18;
+  --text2:  #5c5b57;
+  --text3:  #9a9892;
+  --accent: #185FA5;
+  --mono:   'DM Mono','Menlo','Courier New',monospace;
+  --sans:   system-ui,-apple-system,sans-serif;
+  --r:      10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:     #18181a;
+    --bg2:    #222224;
+    --bg3:    #2a2a2c;
+    --border: rgba(255,255,255,.09);
+    --text:   #e8e7e2;
+    --text2:  #9a9892;
+    --text3:  #5c5b57;
+    --accent: #60aaff;
+  }
+}
+html, body { background: var(--bg); color: var(--text); font-family: var(--sans); }
+body { padding: 32px 24px 60px; max-width: 900px; margin: 0 auto; }
+
+.eyebrow { font-size: 11px; font-family: var(--mono); color: var(--text3); letter-spacing: .06em; margin-bottom: 6px; }
+h1 { font-size: 22px; font-weight: 500; line-height: 1.25; margin-bottom: 4px; }
+h1 em { font-style: italic; color: var(--text2); }
+.subtitle { font-size: 14px; color: var(--text2); line-height: 1.6; margin-bottom: 24px; max-width: 600px; }
+
+.toggle-row { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+.tog { font-size: 11px; padding: 4px 12px; border: 0.5px solid var(--border); border-radius: 20px; cursor: pointer; background: transparent; color: var(--text2); font-family: var(--mono); transition: all .12s; }
+.tog:hover { border-color: var(--text3); color: var(--text); }
+.tog.on { background: var(--bg2); color: var(--text); border-color: var(--text3); }
+
+.controls { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.ctrl-label { font-size: 12px; color: var(--text2); font-family: var(--mono); white-space: nowrap; }
+.controls input[type=range] { flex: 1; accent-color: var(--accent); }
+.ctrl-val { font-size: 12px; font-family: var(--mono); color: var(--text); min-width: 64px; text-align: right; }
+
+.main-grid { display: grid; grid-template-columns: minmax(0,1.45fr) minmax(0,0.55fr); gap: 0; border: 0.5px solid var(--border); border-radius: var(--r); overflow: hidden; margin-bottom: 14px; }
+.chart-panel { padding: 14px 16px; background: var(--bg); }
+.right-panel { border-left: 0.5px solid var(--border); background: var(--bg2); padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+.axis-label { font-size: 10px; color: var(--text3); font-family: var(--mono); margin-bottom: 6px; }
+.chart-wrap { position: relative; height: 290px; }
+
+.patch-label { font-size: 10px; color: var(--text3); font-family: var(--mono); margin-bottom: 6px; }
+.patch-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.patch-box { border-radius: 7px; overflow: hidden; border: 0.5px solid var(--border); }
+.patch-swatch { height: 60px; transition: background .07s; }
+.patch-info { padding: 6px 8px; background: var(--bg); }
+.patch-name { font-size: 10px; color: var(--text3); font-family: var(--mono); }
+.patch-val { font-size: 12px; font-family: var(--mono); color: var(--text); font-weight: 500; }
+
+.readout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 0.5px solid var(--border); border-radius: 7px; overflow: hidden; }
+.rb { padding: 8px 10px; border-right: 0.5px solid var(--border); border-bottom: 0.5px solid var(--border); }
+.rb:nth-child(2n) { border-right: none; }
+.rb:nth-last-child(-n+2) { border-bottom: none; }
+.rb-k { font-size: 10px; color: var(--text3); font-family: var(--mono); margin-bottom: 3px; }
+.rb-v { font-size: 12px; font-family: var(--mono); color: var(--text); font-weight: 500; }
+
+.legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 8px; font-size: 10px; color: var(--text3); font-family: var(--mono); }
+.leg-item { display: flex; align-items: center; gap: 5px; }
+.leg-sw { width: 20px; height: 2px; border-radius: 1px; }
+
+hr { border: none; border-top: 0.5px solid var(--border); margin: 28px 0; }
+
+.notes { display: flex; flex-direction: column; gap: 14px; }
+.note { border-left: 2px solid var(--border); padding: 0 0 0 16px; }
+.note-head { font-size: 11px; font-family: var(--mono); color: var(--text3); letter-spacing: .04em; margin-bottom: 5px; }
+.note-body { font-size: 14px; color: var(--text2); line-height: 1.65; }
+.note-body strong { color: var(--text); font-weight: 500; }
+.note-body code { font-family: var(--mono); font-size: 12px; background: var(--bg3); padding: 1px 5px; border-radius: 3px; color: var(--text); }
+
+.fact-strip { display: grid; grid-template-columns: repeat(3,1fr); gap: 0; border: 0.5px solid var(--border); border-radius: var(--r); overflow: hidden; margin: 20px 0; }
+.fact { padding: 14px 16px; border-right: 0.5px solid var(--border); }
+.fact:last-child { border-right: none; }
+.fact-num { font-size: 26px; font-weight: 500; font-family: var(--mono); color: var(--text); line-height: 1; margin-bottom: 4px; }
+.fact-num em { font-style: normal; font-size: 14px; color: var(--text3); }
+.fact-desc { font-size: 12px; color: var(--text2); line-height: 1.5; }
+
+@media (max-width: 580px) {
+  .main-grid { grid-template-columns: 1fr; }
+  .right-panel { border-left: none; border-top: 0.5px solid var(--border); }
+  .fact-strip { grid-template-columns: 1fr; }
+  .fact { border-right: none; border-bottom: 0.5px solid var(--border); }
+  .fact:last-child { border-bottom: none; }
+}
+</style>
+<script src="vtt-branding.js" defer></script>
+</head>
+<body>
+<div id="vtt-header-mount"></div>
+
+<p class="eyebrow">graph2 &nbsp;·&nbsp; film scanning pipeline</p>
+<h1>Electron count <em>&rarr;</em> display brightness</h1>
+<p class="subtitle">How a raw photosite fill value becomes a pixel on screen — and why gamma encoding is the difference between correct and crushed.</p>
+
+<div class="toggle-row">
+  <button class="tog on" id="tog-gamma" onclick="toggleGamma()">gamma 2.2 encode</button>
+  <button class="tog on" id="tog-both"  onclick="toggleBoth()">show both curves</button>
+</div>
+
+<div class="controls">
+  <span class="ctrl-label">electrons</span>
+  <input type="range" id="probe" min="0" max="100" value="30" step="1" oninput="update()">
+  <span class="ctrl-val" id="cv-electrons">—</span>
+</div>
+
+<div class="main-grid">
+  <div class="chart-panel">
+    <div class="axis-label">display brightness (cd/m²) &nbsp;·&nbsp; electron count (14-bit DN)</div>
+    <div class="chart-wrap">
+      <canvas id="c-main" role="img" aria-label="Display brightness vs electron count. Linear and gamma-corrected curves shown.">Brightness vs electron count.</canvas>
+    </div>
+    <div class="legend">
+      <span class="leg-item"><span class="leg-sw" style="background:#888"></span>linear — no gamma</span>
+      <span class="leg-item"><span class="leg-sw" style="background:#185FA5"></span>sRGB gamma 2.2</span>
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <div>
+      <div class="patch-label">screen patch at probe point</div>
+      <div class="patch-pair">
+        <div class="patch-box">
+          <div class="patch-swatch" id="sw-linear"></div>
+          <div class="patch-info">
+            <div class="patch-name">no gamma</div>
+            <div class="patch-val" id="pv-linear">—</div>
+          </div>
+        </div>
+        <div class="patch-box">
+          <div class="patch-swatch" id="sw-gamma"></div>
+          <div class="patch-info">
+            <div class="patch-name">gamma 2.2</div>
+            <div class="patch-val" id="pv-gamma">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="readout-grid">
+      <div class="rb"><div class="rb-k">electrons</div><div class="rb-v" id="r-e">—</div></div>
+      <div class="rb"><div class="rb-k">DN / 16383</div><div class="rb-v" id="r-dn">—</div></div>
+      <div class="rb"><div class="rb-k">linear 8-bit</div><div class="rb-v" id="r-lin8">—</div></div>
+      <div class="rb"><div class="rb-k">gamma 8-bit</div><div class="rb-v" id="r-gam8">—</div></div>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<div class="fact-strip">
+  <div class="fact">
+    <div class="fact-num">50<em>%</em></div>
+    <div class="fact-desc">of well capacity (8,192 e⁻) renders as <strong>~18 cd/m²</strong> linearly — only 18% of peak brightness. With gamma encode: <strong>50 cd/m²</strong>.</div>
+  </div>
+  <div class="fact">
+    <div class="fact-num">2.2</div>
+    <div class="fact-desc">Display gamma assumed by sRGB standard. The monitor applies v<sup>2.2</sup> to every value it receives — gamma encode pre-compensates with v<sup>1/2.2</sup>.</div>
+  </div>
+  <div class="fact">
+    <div class="fact-num">16<em>-bit</em></div>
+    <div class="fact-desc">TIFFs from camera scanners must carry an embedded ICC profile. Without it, the OS renders the file as linear — same crush as no gamma.</div>
+  </div>
+</div>
+
+<div class="notes">
+
+  <div class="note">
+    <div class="note-head">shadow compression — where the damage is worst</div>
+    <div class="note-body">
+      Drag the probe to the left (low electron counts). This is where shadow detail from a color negative lands after inversion — the densest parts of the film transmit the least light, so photosites fill to only a small fraction of their capacity. Without gamma encoding, the display applies its own power curve on top of an already-dark linear value, squaring it into near-black. <strong>A shadow at 10% well fill renders at roughly 1% display brightness linearly — almost indistinguishable from black.</strong> With sRGB gamma encode, the same value lifts to about 35% brightness, which is perceptually correct.
+    </div>
+  </div>
+
+  <div class="note">
+    <div class="note-head">the midpoint gap — 50% well ≠ 50% brightness</div>
+    <div class="note-body">
+      At exactly half the well capacity — <strong>8,192 electrons</strong>, <code>DN 8192</code> — a linear signal delivers only ~18 cd/m² on a 100 cd/m² display. That is 18% of peak, not 50%. The gamma-encoded version delivers ~50 cd/m², which is what the eye expects from a "middle grey." This gap is not a bug in the sensor or the display: it is the predictable consequence of the display's assumed input encoding. The sensor is linear by design; the display is perceptual by design; gamma encoding bridges them.
+    </div>
+  </div>
+
+  <div class="note">
+    <div class="note-head">why 16-bit TIFFs need an ICC profile</div>
+    <div class="note-body">
+      When a camera scanner exports a 16-bit TIFF without an embedded color profile, the operating system and most viewers assume the data is <strong>already gamma-encoded</strong> (sRGB). If the raw linear scan data is stored untagged, the viewer applies its sRGB display transform on top of linear values — equivalent to raising a linear signal to the power of <code>2.2 × 2.2 = 4.84</code>. Shadows collapse completely. The fix is either to embed a linear gamma ICC profile (so the OS applies the correct transform), or to apply the gamma encode in the scanning software before export and tag the output as sRGB.
+    </div>
+  </div>
+
+  <div class="note">
+    <div class="note-head">toggle "gamma 2.2 encode" off — this is raw linear export</div>
+    <div class="note-body">
+      With gamma encoding disabled, the chart shows what happens when a scanning application hands off a proportional linear value directly to the display pipeline. Both the curve shape and the screen patch show the result: <strong>highlights compress near peak brightness while shadows are crushed to near-black.</strong> This is also the default rendering behaviour when a 16-bit TIFF is opened in an unmanaged viewer (web browser without color management, basic image viewer) that ignores the embedded profile. The curve is not wrong — the data is correct — but the display context assumes a different encoding.
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const MAX_DN = 16383;
+const dark   = matchMedia('(prefers-color-scheme: dark)').matches;
+const gc     = dark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.06)';
+const tc     = dark ? '#666' : '#aaa';
+const PEAK   = 100;
+
+let showGamma = true;
+let showBoth  = true;
+let probeT    = 30;
+
+function linearBright(dn) { return (dn / MAX_DN) * PEAK; }
+function gammaBright(dn) {
+  const lin = dn / MAX_DN;
+  const enc = lin <= 0.0031308 ? 12.92 * lin : 1.055 * Math.pow(lin, 1/2.2) - 0.055;
+  return enc * PEAK;
+}
+function to8(v01) { return Math.round(Math.max(0, Math.min(1, v01)) * 255); }
+
+function buildCurves() {
+  const N = 220, lin = [], gam = [];
+  for (let i = 0; i <= N; i++) {
+    const dn = (i / N) * MAX_DN;
+    lin.push({ x: +dn.toFixed(0), y: +linearBright(dn).toFixed(3) });
+    gam.push({ x: +dn.toFixed(0), y: +gammaBright(dn).toFixed(3) });
+  }
+  return { lin, gam };
+}
+
+const PROBE = {
+  id: 'probe',
+  afterDraw(chart) {
+    const { ctx, chartArea, scales } = chart;
+    if (!chartArea) return;
+    const dn = Math.round((probeT / 100) * MAX_DN);
+    function cross(xv, yv, col) {
+      const px = scales.x.getPixelForValue(xv);
+      const py = scales.y.getPixelForValue(yv);
+      ctx.save();
+      ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.setLineDash([3,3]);
+      ctx.beginPath(); ctx.moveTo(px, chartArea.top); ctx.lineTo(px, chartArea.bottom); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(chartArea.left, py); ctx.lineTo(chartArea.right, py); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = col;
+      ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+    }
+    if (!showGamma || showBoth) cross(dn, linearBright(dn), dark ? 'rgba(200,200,200,.85)' : 'rgba(70,70,70,.75)');
+    if (showGamma)              cross(dn, gammaBright(dn),  dark ? '#60aaff' : '#1a5fb0');
+  }
+};
+
+let chart = null;
+
+function buildChart() {
+  const { lin, gam } = buildCurves();
+  const ctx = document.getElementById('c-main');
+  if (chart) { chart.destroy(); chart = null; }
+  const ds = [];
+  if (!showGamma || showBoth) ds.push({ data: lin, borderColor: dark?'rgba(170,170,170,.38)':'rgba(80,80,80,.28)', borderWidth:1.5, fill:false, pointRadius:0, tension:0.2 });
+  if (showGamma)              ds.push({ data: gam, borderColor: dark?'#60aaff':'#185FA5',                          borderWidth:2,   fill:false, pointRadius:0, tension:0.2 });
+  chart = new Chart(ctx, {
+    type: 'line', data: { datasets: ds },
+    options: {
+      responsive:true, maintainAspectRatio:false, animation:false, parsing:false,
+      plugins: { legend:{display:false}, tooltip:{enabled:false} },
+      scales: {
+        x: { type:'linear', min:0, max:MAX_DN,
+             title:{display:true, text:'electrons (DN)', font:{size:10}, color:tc},
+             grid:{color:gc}, ticks:{color:tc, font:{size:10}, maxTicksLimit:7,
+               callback: v => v>=1000 ? Math.round(v/1000)+'k' : v} },
+        y: { min:0, max:PEAK*1.04,
+             title:{display:true, text:'brightness (cd/m²)', font:{size:10}, color:tc},
+             grid:{color:gc}, ticks:{color:tc, font:{size:10}, maxTicksLimit:6,
+               callback: v => v.toFixed(0)} }
+      }
+    },
+    plugins: [PROBE]
+  });
+}
+
+function update() {
+  probeT = parseInt(document.getElementById('probe').value);
+  const dn    = Math.round((probeT / 100) * MAX_DN);
+  const lin01 = dn / MAX_DN;
+  const gamEnc = lin01 <= 0.0031308 ? 12.92*lin01 : 1.055*Math.pow(lin01,1/2.2)-0.055;
+  const lin8  = to8(lin01);
+  const gam8  = to8(gamEnc);
+  const lg = 'rgb('+lin8+','+lin8+','+lin8+')';
+  const gg = 'rgb('+gam8+','+gam8+','+gam8+')';
+  document.getElementById('sw-linear').style.background = lg;
+  document.getElementById('sw-gamma').style.background  = gg;
+  document.getElementById('pv-linear').textContent = lin8+' / 255';
+  document.getElementById('pv-gamma').textContent  = gam8+' / 255';
+  document.getElementById('cv-electrons').textContent = dn.toLocaleString()+' e⁻';
+  document.getElementById('r-e').textContent   = dn.toLocaleString();
+  document.getElementById('r-dn').textContent  = (lin01*100).toFixed(1)+'%';
+  document.getElementById('r-lin8').textContent = lin8+' (RGB '+lin8+')';
+  document.getElementById('r-gam8').textContent = gam8+' (RGB '+gam8+')';
+  if (chart) chart.update('none');
+}
+
+function toggleGamma() {
+  showGamma = !showGamma;
+  document.getElementById('tog-gamma').classList.toggle('on', showGamma);
+  buildChart(); update();
+}
+function toggleBoth() {
+  showBoth = !showBoth;
+  document.getElementById('tog-both').classList.toggle('on', showBoth);
+  buildChart(); update();
+}
+
+buildChart();
+update();
+</script>
+<div id="vtt-footer-mount"></div>
+</body>
+</html>

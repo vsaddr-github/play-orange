@@ -1,0 +1,168 @@
+<!-- vtt-header.html · VLAD'S TEST TARGET shared header
+     Injected by vtt-branding.js into every graph page.
+     Place this file in the same folder as the graph HTML files.
+     Logo image: vtt-logo-1000x-100.jpg — must be in the same folder. -->
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400&family=Instrument+Serif:ital@0;1&family=Nunito:wght@800&display=swap');
+
+:root {
+  --vtt-paper:      #f5f2ec;
+  --vtt-surface:    #ede9e1;
+  --vtt-ink:        #1a1814;
+  --vtt-ink2:       #4a4640;
+  --vtt-ink3:       #8a8480;
+  --vtt-rule:       rgba(26,24,20,.13);
+  --vtt-accent:     #c8401a;
+  --vtt-accent-dim: rgba(200,64,26,.32);
+  --vtt-mono:       'DM Mono','Menlo','Courier New',monospace;
+  --vtt-serif:      'Instrument Serif',Georgia,serif;
+  --vtt-sans:       'DM Sans',system-ui,sans-serif;
+  --vtt-rounded:    'Arial Rounded MT Bold','Arial Rounded MT','Nunito','Varela Round',sans-serif;
+}
+
+body {
+  background:  var(--vtt-paper);
+  color:       var(--vtt-ink);
+  font-family: var(--vtt-sans);
+  font-weight: 300;
+  margin:      0;
+}
+
+.vtt-header {
+  padding:       14px 28px 13px;
+  border-bottom: 0.5px solid var(--vtt-rule);
+  position:      relative;
+  overflow:      hidden;
+  background:    var(--vtt-paper);
+}
+
+.vtt-header-grid {
+  position: absolute; inset: 0;
+  pointer-events: none; overflow: hidden;
+}
+.vtt-header-grid span {
+  position: absolute; top: 0; bottom: 0;
+  width: 0.5px; background: rgba(26,24,20,.055);
+}
+
+.vtt-header-inner {
+  position: relative;
+  display: flex; align-items: center;
+  justify-content: space-between; gap: 16px;
+  max-width: 920px; margin: 0 auto;
+}
+
+.vtt-brand { display: flex; align-items: center; gap: 14px; }
+
+/* Logo — cropped square, object-position focuses on the test pattern */
+.vtt-logo {
+  width: 52px; height: 52px;
+  object-fit: cover; object-position: center 75%;
+  border-radius: 4px;
+  border: 0.5px solid var(--vtt-rule);
+  flex-shrink: 0;
+  filter: contrast(1.05);
+}
+
+.vtt-brand-eyebrow {
+  font-family: var(--vtt-mono);
+  font-size: 9px; font-weight: 400;
+  letter-spacing: .16em; color: var(--vtt-accent);
+  text-transform: uppercase; margin-bottom: 3px;
+}
+
+/* VLADS TEST TARGET — Arial Rounded MT Bold / Nunito 800 fallback */
+.vtt-brand-title {
+  font-family: var(--vtt-rounded);
+  font-weight: 800; font-size: 16px;
+  letter-spacing: .01em; color: var(--vtt-ink);
+  line-height: 1; margin-bottom: 3px; white-space: nowrap;
+}
+
+.vtt-brand-sub {
+  font-family: var(--vtt-mono);
+  font-size: 10px; font-weight: 300;
+  letter-spacing: .05em; color: var(--vtt-ink3);
+  margin-bottom: 3px;
+}
+.vtt-brand-sub .vtt-dot { color: var(--vtt-accent); margin: 0 5px; }
+
+.vtt-brand-tagline {
+  font-family: var(--vtt-serif);
+  font-style: italic; font-size: 11.5px;
+  color: var(--vtt-ink3); line-height: 1;
+}
+
+.vtt-nav {
+  display: flex; gap: 6px; align-items: center;
+  flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end;
+}
+.vtt-nav a {
+  font-family: var(--vtt-mono);
+  font-size: 10px; font-weight: 400; letter-spacing: .06em;
+  color: var(--vtt-ink2); text-decoration: none;
+  padding: 4px 9px;
+  border: 0.5px solid var(--vtt-rule); border-radius: 3px;
+  white-space: nowrap; transition: background .12s, color .12s;
+}
+.vtt-nav a:hover { background: rgba(26,24,20,.06); color: var(--vtt-ink); }
+.vtt-nav a.vtt-shop { background: var(--vtt-accent); color: var(--vtt-paper); border-color: var(--vtt-accent); }
+.vtt-nav a.vtt-shop:hover { background: #a83215; border-color: #a83215; }
+</style>
+
+<header class="vtt-header">
+  <div class="vtt-header-grid" id="vtt-grid"></div>
+  <div class="vtt-header-inner">
+
+    <div class="vtt-brand">
+      <img class="vtt-logo" id="vtt-logo-img"
+           src="vtt-logo-1000x-100.jpg"
+           alt="Vlad's Test Target resolution chart logo"
+           width="52" height="52">
+      <div class="vtt-brand-text">
+        <div class="vtt-brand-title">VLADS TEST TARGET</div>
+        <div class="vtt-brand-sub">
+          film scanning at its sharpest
+        </div>
+        <div class="vtt-brand-tagline">Shedding light on the dark side of photography</div>
+      </div>
+    </div>
+
+    <nav class="vtt-nav" aria-label="External links">
+      <a href="https://www.film4ever.info/home" target="_blank" rel="noopener">film4ever.info</a>
+      <a href="https://medium.com/@vladstesttarget" target="_blank" rel="noopener">Medium</a>
+      <a href="https://amzn.to/3IhNPO2" target="_blank" rel="noopener" class="vtt-shop">Shop</a>
+    </nav>
+
+  </div>
+</header>
+
+<script>
+(function () {
+  /* Grid lines */
+  var grid = document.getElementById('vtt-grid');
+  if (grid) {
+    var w = grid.offsetWidth || window.innerWidth || 860;
+    var count = Math.max(6, Math.floor(w / 58));
+    for (var i = 1; i < count; i++) {
+      var s = document.createElement('span');
+      s.style.left = (i / count * 100) + '%';
+      grid.appendChild(s);
+    }
+  }
+
+  /* Resolve logo src relative to vtt-branding.js location
+     so GitHub Pages subfolder deployments work correctly */
+  var base = window.location.href.replace(/[^/]+$/, '');
+  var scripts = document.querySelectorAll('script[src]');
+  for (var j = 0; j < scripts.length; j++) {
+    if (scripts[j].src && scripts[j].src.indexOf('vtt-branding') !== -1) {
+      base = scripts[j].src.replace(/vtt-branding\.js[^/]*$/, '');
+      break;
+    }
+  }
+  var logo = document.getElementById('vtt-logo-img');
+  if (logo) { logo.src = base + 'vtt-logo-1000x-100.jpg'; }
+}());
+</script>

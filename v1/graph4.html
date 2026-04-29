@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>graph4 — Chromogenic dyes · colored coupler contribution · VLADS TEST TARGET</title>
+
+<style>
+/* ── fonts & tokens ──────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400;500&family=Instrument+Serif:ital@0;1&family=Nunito:wght@800&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:      #f5f2ec;
+  --bg2:     #ede9e1;
+  --bg3:     #e6e2d8;
+  --border:  rgba(26,24,20,.12);
+  --text:    #1a1814;
+  --text2:   #4a4640;
+  --text3:   #8a8480;
+  --accent:  #c8401a;
+  --mono:    'DM Mono','Menlo','Courier New',monospace;
+  --serif:   'Instrument Serif',Georgia,serif;
+  --sans:    'DM Sans',system-ui,sans-serif;
+  --radius:  8px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:     #18181a;
+    --bg2:    #222224;
+    --bg3:    #2a2a2c;
+    --border: rgba(255,255,255,.09);
+    --text:   #e8e7e2;
+    --text2:  #9a9892;
+    --text3:  #5c5b57;
+  }
+}
+
+html, body { background: var(--bg); color: var(--text); font-family: var(--sans); font-weight: 300; margin: 0; }
+body { padding: 0 0 60px; max-width: 920px; margin: 0 auto; }
+
+/* ── page header ─────────────────────────────────────────────────────────── */
+.page-header { padding: 28px 28px 22px; border-bottom: 0.5px solid var(--border); }
+.eyebrow { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; color: var(--accent); text-transform: uppercase; margin-bottom: 8px; }
+h1 { font-family: var(--serif); font-size: 24px; font-weight: 400; line-height: 1.2; margin-bottom: 5px; }
+h1 em { font-style: italic; color: var(--text3); }
+.subtitle { font-size: 13px; color: var(--text2); line-height: 1.65; max-width: 640px; }
+
+/* ── interactive section ─────────────────────────────────────────────────── */
+.interactive { padding: 22px 28px 0; }
+
+/* ── exposure slider ─────────────────────────────────────────────────────── */
+.exp-ctrl {
+  display:     flex;
+  align-items: center;
+  gap:         10px;
+  margin-bottom: 20px;
+  flex-wrap:   wrap;
+}
+.exp-ctrl-label {
+  font-family:    var(--mono);
+  font-size:      11px;
+  color:          var(--text2);
+  white-space:    nowrap;
+}
+.exp-ctrl input[type=range] {
+  flex:      1;
+  min-width: 160px;
+  max-width: 280px;
+  accent-color: var(--accent);
+}
+.exp-ctrl-val {
+  font-family: var(--mono);
+  font-size:   12px;
+  font-weight: 500;
+  color:       var(--text);
+  min-width:   36px;
+}
+.exp-ctrl-hint {
+  font-family:    var(--mono);
+  font-size:      10px;
+  color:          var(--text3);
+  letter-spacing: .02em;
+}
+
+/* ── dye layer panels ────────────────────────────────────────────────────── */
+.layer-panel {
+  border:        0.5px solid var(--border);
+  border-radius: var(--radius);
+  overflow:      hidden;
+  margin-bottom: 10px;
+  background:    var(--bg);
+}
+.layer-head {
+  padding:       10px 16px 8px;
+  border-bottom: 0.5px solid var(--border);
+  display:       flex;
+  align-items:   center;
+  justify-content: space-between;
+  gap:           12px;
+  background:    var(--bg2);
+  flex-wrap:     wrap;
+}
+.layer-title {
+  font-family: var(--mono);
+  font-size:   11px;
+  font-weight: 500;
+  letter-spacing: .04em;
+}
+.layer-title.cyan    { color: #007777; }
+.layer-title.magenta { color: #993388; }
+.layer-title.yellow  { color: #997700; }
+@media (prefers-color-scheme: dark) {
+  .layer-title.cyan    { color: #33cccc; }
+  .layer-title.magenta { color: #dd66cc; }
+  .layer-title.yellow  { color: #ccaa33; }
+}
+
+.layer-legend { display: flex; gap: 12px; flex-wrap: wrap; }
+.li { display: flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 10px; color: var(--text3); }
+.ls { width: 20px; height: 2px; border-radius: 1px; flex-shrink: 0; }
+.ls-solid  { height: 2.5px; }
+.ls-dashed { border-top: 2px dashed; background: transparent; height: 0; }
+.ls-faint  { border-top: 1.5px dashed; background: transparent; height: 0; }
+
+.layer-chart { position: relative; height: 170px; padding: 8px 0 4px; }
+.layer-chart canvas { display: block; width: 100%; height: 100%; }
+
+/* ── fact strip ──────────────────────────────────────────────────────────── */
+.fact-strip {
+  display:        grid;
+  grid-template-columns: repeat(3,1fr);
+  gap:            0;
+  border:         0.5px solid var(--border);
+  border-radius:  var(--radius);
+  overflow:       hidden;
+  margin:         22px 28px 0;
+}
+.fact { padding: 14px 16px; border-right: 0.5px solid var(--border); background: var(--bg2); }
+.fact:last-child { border-right: none; }
+.fact-num { font-family: var(--serif); font-size: 28px; color: var(--text); line-height: 1; margin-bottom: 4px; }
+.fact-num em { font-style: normal; font-size: 14px; color: var(--text3); font-family: var(--mono); }
+.fact-desc { font-size: 12px; color: var(--text2); line-height: 1.5; }
+
+/* ── notes ───────────────────────────────────────────────────────────────── */
+hr { border: none; border-top: 0.5px solid var(--border); margin: 28px 28px 0; }
+.notes { padding: 22px 28px 0; display: flex; flex-direction: column; gap: 14px; }
+.note { border-left: 2px solid var(--border); padding: 0 0 0 16px; }
+.note-head { font-family: var(--mono); font-size: 11px; color: var(--text3); letter-spacing: .04em; margin-bottom: 5px; }
+.note-body { font-size: 14px; color: var(--text2); line-height: 1.68; }
+.note-body strong { color: var(--text); font-weight: 500; }
+.note-body code { font-family: var(--mono); font-size: 12px; background: var(--bg3); padding: 1px 5px; border-radius: 3px; color: var(--text); }
+
+/* ── responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 560px) {
+  .fact-strip { grid-template-columns: 1fr; }
+  .fact { border-right: none; border-bottom: 0.5px solid var(--border); }
+  .fact:last-child { border-bottom: none; }
+  .layer-head { flex-direction: column; align-items: flex-start; }
+}
+</style>
+
+<script src="vtt-branding.js" defer></script>
+</head>
+<body>
+
+<div id="vtt-header-mount"></div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     PAGE HEADER
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div class="page-header">
+  <p class="eyebrow">graph4 &nbsp;·&nbsp; film scanning pipeline</p>
+  <h1>Chromogenic dyes <em>&amp;</em> the colored coupler</h1>
+  <p class="subtitle">
+    In color negative film, three dye layers form during development — cyan, magenta, and yellow.
+    Each layer starts from a colored coupler that has its own absorption before any dye has formed.
+    Drag the exposure slider to see how dye builds up as the residual coupler dissolves away —
+    and why this overlap is the root cause of the orange mask.
+  </p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     INTERACTIVE DIAGRAM
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div class="interactive">
+
+  <div class="exp-ctrl">
+    <span class="exp-ctrl-label">Exposure level</span>
+    <input type="range" id="sl" min="0" max="100" value="50" step="1">
+    <span class="exp-ctrl-val" id="sv">50%</span>
+    <span class="exp-ctrl-hint">← drag &nbsp;·&nbsp; 0% = rebate / deep shadow &nbsp;·&nbsp; 100% = highlight</span>
+  </div>
+
+  <!-- Cyan layer -->
+  <div class="layer-panel">
+    <div class="layer-head">
+      <span class="layer-title cyan">Cyan dye layer &nbsp;·&nbsp; red-sensitive emulsion</span>
+      <div class="layer-legend">
+        <div class="li"><div class="ls ls-solid" style="background:#009999"></div><span>cyan dye (formed)</span></div>
+        <div class="li"><div class="ls ls-dashed" style="border-color:#D4537E"></div><span>pink coupler residual</span></div>
+        <div class="li"><div class="ls ls-faint" style="border-color:#888"></div><span>total absorption</span></div>
+        <div class="li"><div class="ls ls-faint" style="border-color:#ccc"></div><span>ideal (red only)</span></div>
+      </div>
+    </div>
+    <div class="layer-chart"><canvas id="cC" role="img" aria-label="Cyan dye layer absorption spectrum. Shows cyan dye forming, pink coupler residual decreasing, and their sum as total absorption."></canvas></div>
+  </div>
+
+  <!-- Magenta layer -->
+  <div class="layer-panel">
+    <div class="layer-head">
+      <span class="layer-title magenta">Magenta dye layer &nbsp;·&nbsp; green-sensitive emulsion</span>
+      <div class="layer-legend">
+        <div class="li"><div class="ls ls-solid" style="background:#CC44AA"></div><span>magenta dye (formed)</span></div>
+        <div class="li"><div class="ls ls-dashed" style="border-color:#BA7517"></div><span>yellow coupler residual</span></div>
+        <div class="li"><div class="ls ls-faint" style="border-color:#888"></div><span>total absorption</span></div>
+        <div class="li"><div class="ls ls-faint" style="border-color:#ccc"></div><span>ideal (green only)</span></div>
+      </div>
+    </div>
+    <div class="layer-chart"><canvas id="mC" role="img" aria-label="Magenta dye layer absorption spectrum. Shows magenta dye forming, yellow coupler residual decreasing, and their sum."></canvas></div>
+  </div>
+
+  <!-- Yellow layer -->
+  <div class="layer-panel">
+    <div class="layer-head">
+      <span class="layer-title yellow">Yellow dye layer &nbsp;·&nbsp; blue-sensitive emulsion</span>
+      <div class="layer-legend">
+        <div class="li"><div class="ls ls-solid" style="background:#CCAA00"></div><span>yellow dye (formed)</span></div>
+        <div class="li"><div class="ls ls-faint" style="border-color:#ccc"></div><span>ideal = actual &nbsp;(no coupler correction needed)</span></div>
+      </div>
+    </div>
+    <div class="layer-chart"><canvas id="yC" role="img" aria-label="Yellow dye layer absorption spectrum. Yellow dye absorbs blue cleanly — no significant coupler residual."></canvas></div>
+  </div>
+
+</div><!-- /interactive -->
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     KEY NUMBERS
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div class="fact-strip">
+  <div class="fact">
+    <div class="fact-num">3<em> layers</em></div>
+    <div class="fact-desc">Cyan, magenta, and yellow dye layers — each formed from a different coupler compound during chromogenic development.</div>
+  </div>
+  <div class="fact">
+    <div class="fact-num">2<em> of 3</em></div>
+    <div class="fact-desc">Two of the three couplers (cyan and magenta) are themselves colored. Their residual absorption at low exposure is the direct cause of the orange mask.</div>
+  </div>
+  <div class="fact">
+    <div class="fact-num">0<em> for yellow</em></div>
+    <div class="fact-desc">The yellow coupler is colorless. Yellow dye absorbs only blue — no unwanted residual absorption, no correction needed in that channel.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     OBSERVATION NOTES
+     ═══════════════════════════════════════════════════════════════════════ -->
+<hr>
+<div class="notes">
+
+  <div class="note">
+    <div class="note-head">how chromogenic dyes form</div>
+    <div class="note-body">
+      Color negative film has three emulsion layers, each sensitive to a different third of the visible spectrum.
+      During development, exposed silver halide grains react with a developing agent that simultaneously
+      oxidises and combines with a <strong>coupler</strong> molecule built into each layer.
+      This coupling reaction forms a dye molecule in place — cyan in the red-sensitive layer,
+      magenta in the green-sensitive layer, yellow in the blue-sensitive layer.
+      The amount of dye formed is proportional to the amount of silver developed,
+      which is proportional to the original exposure. <strong>More exposure → more dye formed.</strong>
+    </div>
+  </div>
+
+  <div class="note">
+    <div class="note-head">what the slider shows — dye vs residual coupler</div>
+    <div class="note-body">
+      At <strong>0% exposure</strong> (the film rebate, or the deepest shadow — no silver developed, no dye formed),
+      the coupler is entirely unconsumed. Its own absorption dominates the spectrum.
+      The pink coupler in the cyan layer absorbs strongly in the blue and green regions.
+      The yellow coupler in the magenta layer absorbs in the blue region.
+      At <strong>100% exposure</strong> (maximum highlight), all coupler has been consumed and converted to dye —
+      the residual coupler absorption disappears, replaced entirely by the dye's absorption curve.
+      In between, both coexist: total absorption is the sum of dye plus remaining coupler.
+    </div>
+  </div>
+
+  <div class="note">
+    <div class="note-head">why the orange mask exists</div>
+    <div class="note-body">
+      The film rebate — the clear border between frames — receives zero exposure.
+      It contains no developed silver and no formed dye.
+      But the coupler is still fully present.
+      The pink residual coupler in the cyan layer absorbs blue and green light even with no dye present.
+      The yellow residual coupler in the magenta layer adds further blue absorption.
+      Together, these unconsumed couplers in the unexposed base produce
+      <strong>a warm orange-yellow cast across the entire frame — the orange mask.</strong>
+      It is not a defect or an accident; it is engineered deliberately to improve colour accuracy
+      by partially compensating for the unwanted secondary absorptions of the cyan and magenta dyes themselves.
+    </div>
+  </div>
+
+  <div class="note">
+    <div class="note-head">why the yellow layer needs no correction</div>
+    <div class="note-body">
+      The yellow dye absorbs only blue light, which is exactly what it should do.
+      Its coupler compound is colorless — it contributes no absorption before the dye forms.
+      This is why the yellow channel in a scanned negative is typically the cleanest:
+      no mask contribution, no cross-channel contamination from the coupler.
+      <strong>The cyan and magenta layers are where the complexity lives.</strong>
+      The cyan dye in particular has a significant secondary absorption in the blue region —
+      visible even at full exposure — which contributes to the colour correction problem
+      that a 3×3 colour matrix must solve during inversion.
+    </div>
+  </div>
+
+  <div class="note">
+    <div class="note-head">implication for scanning — what the scanner actually measures</div>
+    <div class="note-body">
+      When a scanner illuminates a frame of color negative, what each sensor channel receives is not
+      a clean single-dye signal. <strong>The red channel receives cyan dye absorption plus the pink
+      coupler residual. The green channel receives magenta dye plus yellow coupler residual.</strong>
+      The blue channel receives yellow dye only — but also the combined residual absorption from
+      both the pink and yellow couplers in the other layers, since all three layers are stacked.
+      This is why the raw blue channel of a negative scan is typically the most suppressed —
+      and why setting scanner exposure to balance the three channels before inversion is not
+      straightforward. The correct exposure point differs per channel, and varies across the
+      density range of the frame.
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     CHART.JS + DIAGRAM SCRIPT
+     Original diagram by Vlad's Test Target — wrapped into series style.
+     ═══════════════════════════════════════════════════════════════════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+/* ── wavelength axis ─────────────────────────────────────────────────────── */
+const NM = [];
+for (let n = 400; n <= 700; n += 5) NM.push(n);
+
+/* ── spectral math helpers ───────────────────────────────────────────────── */
+function bell(center, width, height, arr) {
+  return arr.map(n => height * Math.exp(-0.5 * Math.pow((n - center) / width, 2)));
+}
+function addArr(a, b) { return a.map((v, i) => v + b[i]); }
+function clamp(a, lo, hi) { return a.map(v => Math.min(hi, Math.max(lo, v))); }
+
+/* ── spectral curves per layer ───────────────────────────────────────────── */
+
+/* Cyan dye: primary peak 650nm (red), secondary 430nm (blue), 530nm (green) */
+function cyanDye(t) {
+  return clamp(addArr(addArr(bell(650,55,t,NM), bell(430,35,t*0.55,NM)), bell(530,50,t*0.38,NM)), 0, 1);
+}
+/* Pink coupler residual: absorbs blue + green, diminishes as dye forms (1-t) */
+function pinkCoupler(t) {
+  const r = 1 - t;
+  return clamp(addArr(bell(420,40,r*0.55,NM), bell(520,55,r*0.35,NM)), 0, 1);
+}
+/* Ideal cyan: absorbs only red (>580nm) */
+function cyanIdeal() { return NM.map(n => n >= 580 ? 0.9 : 0); }
+
+/* Magenta dye: primary 545nm (green), secondary 435nm (blue) */
+function magentaDye(t) {
+  return clamp(addArr(bell(545,52,t,NM), bell(435,38,t*0.42,NM)), 0, 1);
+}
+/* Yellow coupler residual: absorbs blue, diminishes as dye forms */
+function yellowCoupler(t) {
+  return clamp(bell(430,42,(1-t)*0.42,NM), 0, 1);
+}
+/* Ideal magenta: absorbs only 490–620nm */
+function magentaIdeal() {
+  return NM.map(n => (n >= 490 && n <= 620) ? bell(545,52,1,[n])[0] : 0);
+}
+
+/* Yellow dye: absorbs only blue (<490nm) */
+function yellowDye(t) {
+  return clamp(NM.map(n => n > 490 ? 0 : bell(440,38,t,[n])[0]), 0, 1);
+}
+/* Ideal yellow: same — yellow is clean */
+function yellowIdeal() {
+  return NM.map(n => n <= 490 ? bell(440,38,1,[n])[0] : 0);
+}
+
+/* ── theme ───────────────────────────────────────────────────────────────── */
+const isDark  = matchMedia('(prefers-color-scheme: dark)').matches;
+const gridCol = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)';
+const tickCol = isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.38)';
+const bf      = isDark ? 0.09 : 0.07;
+
+/* ── background spectral band plugin ─────────────────────────────────────── */
+const spectrumBands = [
+  { from:400, to:490, label:'blue',  col:`rgba(60,100,220,${bf})` },
+  { from:490, to:580, label:'green', col:`rgba(40,160,80,${bf})` },
+  { from:580, to:700, label:'red',   col:`rgba(210,50,40,${bf})` },
+];
+
+const bandPlugin = {
+  id: 'bands',
+  beforeDraw(chart) {
+    const { ctx, chartArea: ca, scales: { x } } = chart;
+    spectrumBands.forEach(b => {
+      const x0 = x.getPixelForValue(b.from);
+      const x1 = x.getPixelForValue(b.to);
+      ctx.fillStyle = b.col;
+      ctx.fillRect(x0, ca.top, x1 - x0, ca.height);
+      ctx.fillStyle = isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.28)';
+      ctx.font = '9px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(b.label, (x0 + x1) / 2, ca.top + 11);
+    });
+  }
+};
+Chart.register(bandPlugin);
+
+/* ── shared chart options ────────────────────────────────────────────────── */
+const commonOpts = () => ({
+  responsive:          true,
+  maintainAspectRatio: false,
+  animation:           { duration: 100 },
+  plugins:             { legend: { display: false }, tooltip: { enabled: false } },
+  scales: {
+    x: {
+      type:   'linear', min: 400, max: 700,
+      ticks:  { stepSize: 50, color: tickCol, font: { size: 10 } },
+      grid:   { color: gridCol },
+      border: { display: false },
+      title:  { display: true, text: 'wavelength (nm)', font: { size: 9 }, color: tickCol }
+    },
+    y: {
+      min: 0, max: 1.2,
+      ticks:  { stepSize: 0.5, color: tickCol, font: { size: 10 }, callback: v => v.toFixed(1) },
+      grid:   { color: gridCol },
+      border: { display: false },
+      title:  { display: true, text: 'absorption', font: { size: 9 }, color: tickCol }
+    }
+  }
+});
+
+/* ── chart factory ───────────────────────────────────────────────────────── */
+function makeChart(id, datasets) {
+  return new Chart(document.getElementById(id), {
+    type: 'line',
+    data: {
+      labels: NM,
+      datasets: datasets.map(d => ({
+        data:        d.data,
+        borderColor: d.color,
+        borderWidth: d.width || 2,
+        borderDash:  d.dash  || [],
+        fill:        d.fill ? { target: 'origin', above: d.fillColor } : false,
+        pointRadius: 0,
+        tension:     0.4
+      }))
+    },
+    options: commonOpts()
+  });
+}
+
+/* ── initial exposure value ──────────────────────────────────────────────── */
+let t = 0.5;
+
+/* ── build charts ────────────────────────────────────────────────────────── */
+
+/* Cyan layer: [ideal, pink coupler residual, cyan dye, total] */
+const cChart = makeChart('cC', [
+  { data: cyanIdeal(),
+    color: isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.18)', width: 1.5, dash: [5,4] },
+  { data: pinkCoupler(t),
+    color: '#D4537E', width: 2, dash: [5,3],
+    fill: true, fillColor: isDark ? 'rgba(212,83,126,0.16)' : 'rgba(212,83,126,0.12)' },
+  { data: cyanDye(t),
+    color: '#009999', width: 2.5,
+    fill: true, fillColor: isDark ? 'rgba(0,153,153,0.16)' : 'rgba(0,153,153,0.12)' },
+  { data: clamp(addArr(cyanDye(t), pinkCoupler(t)), 0, 2),
+    color: isDark ? 'rgba(255,255,255,0.50)' : 'rgba(0,0,0,0.42)', width: 1.5, dash: [2,2] },
+]);
+
+/* Magenta layer: [ideal, yellow coupler residual, magenta dye, total] */
+const mChart = makeChart('mC', [
+  { data: magentaIdeal(),
+    color: isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.18)', width: 1.5, dash: [5,4] },
+  { data: yellowCoupler(t),
+    color: '#BA7517', width: 2, dash: [5,3],
+    fill: true, fillColor: isDark ? 'rgba(186,117,23,0.16)' : 'rgba(186,117,23,0.12)' },
+  { data: magentaDye(t),
+    color: '#CC44AA', width: 2.5,
+    fill: true, fillColor: isDark ? 'rgba(204,68,170,0.16)' : 'rgba(204,68,170,0.12)' },
+  { data: clamp(addArr(magentaDye(t), yellowCoupler(t)), 0, 2),
+    color: isDark ? 'rgba(255,255,255,0.50)' : 'rgba(0,0,0,0.42)', width: 1.5, dash: [2,2] },
+]);
+
+/* Yellow layer: [ideal, yellow dye] */
+const yChart = makeChart('yC', [
+  { data: yellowIdeal(),
+    color: isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.18)', width: 1.5, dash: [5,4] },
+  { data: yellowDye(t),
+    color: '#CCAA00', width: 2.5,
+    fill: true, fillColor: isDark ? 'rgba(204,170,0,0.16)' : 'rgba(204,170,0,0.12)' },
+]);
+
+/* ── update all charts on slider move ────────────────────────────────────── */
+function updateAll(newT) {
+  t = newT;
+
+  const cd = cyanDye(t), pc = pinkCoupler(t);
+  cChart.data.datasets[1].data = pc;
+  cChart.data.datasets[2].data = cd;
+  cChart.data.datasets[3].data = clamp(addArr(cd, pc), 0, 2);
+  cChart.update('none');
+
+  const md = magentaDye(t), yc = yellowCoupler(t);
+  mChart.data.datasets[1].data = yc;
+  mChart.data.datasets[2].data = md;
+  mChart.data.datasets[3].data = clamp(addArr(md, yc), 0, 2);
+  mChart.update('none');
+
+  yChart.data.datasets[1].data = yellowDye(t);
+  yChart.update('none');
+}
+
+/* ── slider event ────────────────────────────────────────────────────────── */
+document.getElementById('sl').addEventListener('input', function () {
+  const v = parseInt(this.value);
+  document.getElementById('sv').textContent = v + '%';
+  updateAll(v / 100);
+});
+</script>
+
+<div id="vtt-footer-mount"></div>
+</body>
+</html>

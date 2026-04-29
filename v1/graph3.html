@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>graph3 — linear pipeline · Lightroom import · gamma order</title>
+<style>
+/* ─── reset ──────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ─── design tokens ──────────────────────────────────────────────────────── */
+:root {
+  --bg:     #ffffff;
+  --bg2:    #f5f4f1;
+  --bg3:    #eeedea;
+  --border: rgba(0,0,0,.11);
+  --text:   #1a1a18;
+  --text2:  #5c5b57;
+  --text3:  #9a9892;
+  --mono:   'DM Mono','Menlo','Courier New',monospace;
+  --sans:   system-ui,-apple-system,sans-serif;
+  --r:      10px;
+  --r-sm:   6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:     #18181a;
+    --bg2:    #222224;
+    --bg3:    #2a2a2c;
+    --border: rgba(255,255,255,.09);
+    --text:   #e8e7e2;
+    --text2:  #9a9892;
+    --text3:  #5c5b57;
+  }
+}
+
+/* ─── page shell ─────────────────────────────────────────────────────────── */
+html, body { background: var(--bg); color: var(--text); font-family: var(--sans); }
+body { padding: 28px 22px 60px; max-width: 960px; margin: 0 auto; }
+
+/* ─── header ─────────────────────────────────────────────────────────────── */
+.eyebrow  { font-size: 11px; font-family: var(--mono); color: var(--text3);
+            letter-spacing: .06em; margin-bottom: 5px; }
+h1        { font-size: 20px; font-weight: 500; margin-bottom: 3px; line-height: 1.25; }
+h1 em     { font-style: italic; color: var(--text2); }
+.subtitle { font-size: 13px; color: var(--text2); line-height: 1.65;
+            margin-bottom: 22px; max-width: 680px; }
+
+/* ─── toggle pills ───────────────────────────────────────────────────────── */
+.tog-row  { display: flex; gap: 8px; margin-bottom: 14px;
+            flex-wrap: wrap; align-items: center; }
+.tog-label{ font-size: 11px; color: var(--text2); font-family: var(--mono); }
+.tog {
+  font-size: 11px; padding: 5px 13px;
+  border: 0.5px solid rgba(0,0,0,.18); border-radius: 20px;
+  cursor: pointer; background: transparent; color: var(--text2);
+  font-family: var(--mono); transition: all .12s;
+}
+.tog:hover { color: var(--text); }
+.tog.bad.on  { background: #fcebeb; color: #a32d2d; border-color: #f09595; }
+.tog.good.on { background: #eaf3de; color: #3b6d11; border-color: #97c459; }
+@media (prefers-color-scheme: dark) {
+  .tog { border-color: rgba(255,255,255,.15); }
+  .tog.bad.on  { background: #501313; color: #f09595; border-color: #a32d2d; }
+  .tog.good.on { background: #173404; color: #c0dd97; border-color: #3b6d11; }
+}
+
+/* ─── five-stage pipeline grid ───────────────────────────────────────────── */
+.pipeline {
+  display: grid; grid-template-columns: repeat(5, minmax(0,1fr));
+  gap: 0; border: 0.5px solid var(--border);
+  border-radius: var(--r); overflow: hidden; margin-bottom: 10px;
+}
+.stage { padding: 8px 8px 10px; border-right: 0.5px solid var(--border);
+         background: var(--bg); transition: background .15s; }
+.stage:last-child { border-right: none; }
+.stage.hl-bad  { background: rgba(226,75,74,.05); }
+.stage.hl-good { background: rgba(99,153,34,.05); }
+
+.s-label { font-size: 9px; font-family: var(--mono); color: var(--text3);
+           margin-bottom: 5px; min-height: 24px; line-height: 1.35;
+           letter-spacing: .02em; }
+.s-chart { position: relative; height: 100px; }
+.s-note  { font-size: 9px; font-family: var(--mono); color: var(--text3);
+           margin-top: 5px; line-height: 1.4; min-height: 26px; }
+.s-note.bad  { color: #a32d2d; }
+.s-note.good { color: #3b6d11; }
+@media (prefers-color-scheme: dark) {
+  .s-note.bad  { color: #f09595; }
+  .s-note.good { color: #c0dd97; }
+}
+
+/* ─── arrow connector row ────────────────────────────────────────────────── */
+.arrow-row { display: flex; align-items: center; padding: 0 2px;
+             margin-bottom: 10px; }
+.a-seg  { display: flex; align-items: center; flex: 1; min-width: 0; }
+.a-line { flex: 1; height: 1px; background: var(--border); }
+.a-head { width: 0; height: 0; flex-shrink: 0;
+          border-top: 4px solid transparent;
+          border-bottom: 4px solid transparent;
+          border-left: 6px solid var(--border); }
+.a-lbl  { font-size: 9px; font-family: var(--mono); color: var(--text3);
+          white-space: nowrap; margin: 0 3px; }
+.a-lbl.bad  { color: #E24B4A; font-weight: 500; }
+.a-lbl.good { color: #639922; font-weight: 500; }
+
+/* ─── result card pair ───────────────────────────────────────────────────── */
+.result-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.r-card { border: 0.5px solid var(--border); border-radius: var(--r-sm); overflow: hidden; }
+.r-card.bad-card  { border-color: #f09595; }
+.r-card.good-card { border-color: #97c459; }
+.r-head { padding: 6px 10px; font-size: 10px;
+          font-family: var(--mono); line-height: 1.3; }
+.r-head.bad-head  { background: #fcebeb; color: #791f1f; }
+.r-head.good-head { background: #eaf3de; color: #27500a; }
+@media (prefers-color-scheme: dark) {
+  .r-head.bad-head  { background: #501313; color: #f09595; }
+  .r-head.good-head { background: #173404; color: #c0dd97; }
+}
+.r-chart { position: relative; height: 120px;
+           padding: 8px; background: var(--bg2); }
+
+/* ─── divider + notes ────────────────────────────────────────────────────── */
+hr { border: none; border-top: 0.5px solid var(--border); margin: 28px 0; }
+
+.fact-strip {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 0; border: 0.5px solid var(--border);
+  border-radius: var(--r); overflow: hidden; margin: 20px 0;
+}
+.fact           { padding: 14px 16px; border-right: 0.5px solid var(--border); }
+.fact:last-child{ border-right: none; }
+.fact-num       { font-size: 22px; font-weight: 500; font-family: var(--mono);
+                  color: var(--text); line-height: 1; margin-bottom: 4px; }
+.fact-num em    { font-style: normal; font-size: 13px; color: var(--text3); }
+.fact-desc      { font-size: 12px; color: var(--text2); line-height: 1.55; }
+
+.notes { display: flex; flex-direction: column; gap: 14px; }
+.note  { border-left: 2px solid var(--border); padding: 0 0 0 16px;
+         border-radius: 0; }
+.note-head { font-size: 11px; font-family: var(--mono); color: var(--text3);
+             letter-spacing: .04em; margin-bottom: 5px; }
+.note-body { font-size: 14px; color: var(--text2); line-height: 1.65; }
+.note-body strong { color: var(--text); font-weight: 500; }
+.note-body code   { font-family: var(--mono); font-size: 12px;
+                    background: var(--bg3); padding: 1px 5px;
+                    border-radius: 3px; color: var(--text); }
+
+/* ─── responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .pipeline    { grid-template-columns: 1fr 1fr; }
+  .result-row  { grid-template-columns: 1fr; }
+  .fact-strip  { grid-template-columns: 1fr; }
+  .fact        { border-right: none; border-bottom: 0.5px solid var(--border); }
+  .fact:last-child { border-bottom: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     PAGE HEADER
+     ═══════════════════════════════════════════════════════════════════════ -->
+<p class="eyebrow">graph3 &nbsp;·&nbsp; film scanning pipeline</p>
+<h1>Linear space <em>&rarr;</em> inversion <em>&rarr;</em> display</h1>
+<p class="subtitle">
+  Why negative inversion must happen in linear space — and how a Lightroom
+  import tone curve applied before inversion permanently destroys toe and
+  shoulder detail that was present in the original scan.
+</p>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     TOGGLE — switches between the two pipeline modes.
+     "early" = tone curve at Lightroom import (wrong order)
+     "late"  = linear profile at import, gamma only at display (correct)
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div class="tog-row">
+  <span class="tog-label">Lightroom import profile:</span>
+  <button class="tog bad on"  id="tog-early" onclick="setMode('early')">tone curve on import (wrong)</button>
+  <button class="tog good"    id="tog-late"  onclick="setMode('late')">linear profile on import (correct)</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     FIVE-STAGE PIPELINE
+     Each stage is a mini Chart.js canvas.
+     Stage 3 (Lightroom import) is the decision point — highlighted red or
+     green depending on mode. All other stages are fixed except their
+     dependent outputs (stages 4 and 5 change as a consequence of stage 3).
+
+     Stage 1: H&D characteristic curve — always the same
+     Stage 2: sensor electrons (linear physics, always the same)
+     Stage 3: after Lightroom import — linear OR tone-curved
+     Stage 4: after negative inversion — clean OR distorted
+     Stage 5: display output — correct OR crushed
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div class="pipeline">
+  <div class="stage" id="st0">
+    <div class="s-label">1 · film negative</div>
+    <div class="s-chart"><canvas id="c0" role="img" aria-label="H&D characteristic curve of color negative film, showing toe, linear region, and shoulder">H&D curve</canvas></div>
+    <div class="s-note">density D<br>vs log H</div>
+  </div>
+
+  <div class="stage" id="st1">
+    <div class="s-label">2 · light thru film → sensor electrons</div>
+    <div class="s-chart"><canvas id="c1" role="img" aria-label="Sensor electron count vs density — exponential, always linear raw data">Sensor electrons</canvas></div>
+    <div class="s-note">raw file:<br>always linear</div>
+  </div>
+
+  <div class="stage" id="st2">
+    <div class="s-label">3 · Lightroom import</div>
+    <div class="s-chart"><canvas id="c2" role="img" aria-label="Signal after Lightroom import — linear passthrough or tone curve applied depending on profile choice">Import result</canvas></div>
+    <div class="s-note" id="s2-note"></div>
+  </div>
+
+  <div class="stage" id="st3">
+    <div class="s-label">4 · negative inversion</div>
+    <div class="s-chart"><canvas id="c3" role="img" aria-label="Signal after inversion — clean if linear import was used, distorted if tone curve was applied first">Inverted signal</canvas></div>
+    <div class="s-note" id="s3-note"></div>
+  </div>
+
+  <div class="stage" id="st4">
+    <div class="s-label">5 · display output</div>
+    <div class="s-chart"><canvas id="c4" role="img" aria-label="Final display brightness after gamma encoding and display — correct smooth response or crushed toe and shoulder">Display</canvas></div>
+    <div class="s-note" id="s4-note"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     ARROW ROW
+     Labels describe the transform applied between each stage.
+     Stage 3 label changes to flag the bad/good operation.
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div class="arrow-row">
+  <div class="a-seg"><div class="a-line"></div><div class="a-head"></div></div>
+  <span class="a-lbl">T = 10^−D</span>
+  <div class="a-seg"><div class="a-line"></div><div class="a-head"></div></div>
+  <span class="a-lbl" id="a2">LR import</span>
+  <div class="a-seg"><div class="a-line"></div><div class="a-head"></div></div>
+  <span class="a-lbl" id="a3">invert</span>
+  <div class="a-seg"><div class="a-line"></div><div class="a-head"></div></div>
+  <span class="a-lbl" id="a4">gamma + display</span>
+  <div class="a-seg"><div class="a-line"></div><div class="a-head"></div></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     RESULT PAIR
+     Both results are always shown simultaneously so the difference is
+     immediately visible regardless of which toggle is active.
+     The dashed grey line in the bad card overlays the correct curve
+     for direct comparison.
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div class="result-row">
+  <div class="r-card bad-card">
+    <div class="r-head bad-head">tone curve on import → toe &amp; shoulder crushed after inversion</div>
+    <div class="r-chart"><canvas id="c-bad"  role="img" aria-label="Bad result: toe and shoulder destroyed by premature tone curve at Lightroom import. Dashed line shows correct result for comparison.">Crushed result</canvas></div>
+  </div>
+  <div class="r-card good-card">
+    <div class="r-head good-head">linear import → inversion works correctly → tones preserved</div>
+    <div class="r-chart"><canvas id="c-good" role="img" aria-label="Correct result: smooth tonal response across full density range when linear import profile is used.">Correct result</canvas></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     KEY NUMBERS
+     ═══════════════════════════════════════════════════════════════════════ -->
+<hr>
+<div class="fact-strip">
+  <div class="fact">
+    <div class="fact-num">v<em>^2.2</em></div>
+    <div class="fact-desc">
+      Display power function. Every monitor applies this to incoming
+      pixel values. Gamma encoding pre-compensates with v^(1/2.2) so
+      the eye sees linear brightness — but only if it is applied last.
+    </div>
+  </div>
+  <div class="fact">
+    <div class="fact-num">1 − v</div>
+    <div class="fact-desc">
+      Negative inversion in linear space. The entire operation is
+      a simple arithmetic flip. It only produces a correct positive
+      if v is a linear representation of transmittance at that point.
+    </div>
+  </div>
+  <div class="fact">
+    <div class="fact-num">3<em> profiles</em></div>
+    <div class="fact-desc">
+      Lightroom profiles that preserve linearity: "Linear" (built-in),
+      Negative Lab Pro's linear import profile, and any custom DCP
+      with a flat tone curve and no look table.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     OBSERVATION NOTES
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div class="notes">
+
+  <div class="note">
+    <div class="note-head">why the raw file is always linear</div>
+    <div class="note-body">
+      A camera sensor is a photon counter. Each photosite accumulates
+      electrons in direct proportion to the number of photons that hit it
+      during the exposure. The raw file records those electron counts as
+      integers — no tone curve, no gamma, no colour matrix applied yet.
+      <strong>The raw file is always linear regardless of what camera or scanner
+      produced it.</strong> What varies is what software does to that linear data
+      at the moment of import or development.
+    </div>
+  </div>
+
+  <div class="note">
+    <div class="note-head">what Lightroom's default profiles actually do</div>
+    <div class="note-body">
+      When you import a raw file into Lightroom with a profile such as
+      <code>Adobe Color</code>, <code>Camera Standard</code>, or any
+      manufacturer profile, Lightroom applies a DCP (Digital Camera Profile)
+      that contains a tone curve and often a look table. The tone curve is
+      an S-shaped function that lifts shadows, adds contrast in the midtones,
+      and rolls off highlights. <strong>For direct photography this looks
+      pleasing because it mimics the response of negative film.</strong>
+      For a scan of a negative, it is the wrong operation — it applies
+      a film-like response on top of data that already encodes film
+      response, and does so before the inversion that is needed to
+      convert the negative into a positive.
+    </div>
+  </div>
+
+  <div class="note">
+    <div class="note-head">why operation order is irreversible</div>
+    <div class="note-body">
+      Inversion is the operation <code>v → 1 − v</code>. It is only
+      mathematically meaningful when v is a linear representation of
+      the scene — specifically, a value proportional to the transmittance
+      T at each point of the negative. If a tone curve has already been
+      applied, v is no longer proportional to T. It is a bent, compressed
+      version of T. Inverting it with <code>1 − v</code> produces a result
+      that is the inversion of a bent curve, not the inversion of the
+      underlying scene luminance. <strong>The toe of the original negative
+      (dense shadows, low T) was lifted by the tone curve before inversion;
+      after inversion it becomes a compressed highlight. The shoulder
+      (thin highlights, high T) was compressed by the tone curve; after
+      inversion it becomes a blocked shadow.</strong> These are not
+      recoverable errors — the tonal relationships have been permanently
+      scrambled. No adjustment in Lightroom after inversion can undo
+      a non-linear operation that was applied before inversion.
+    </div>
+  </div>
+
+  <div class="note">
+    <div class="note-head">the correct workflow — linear through to inversion</div>
+    <div class="note-body">
+      Import the raw scan with a <strong>linear profile</strong>. In Lightroom
+      this means selecting the built-in <code>Linear</code> profile in the
+      Basic panel, or using a plugin such as Negative Lab Pro which
+      handles this automatically. With a linear import, the data passed
+      to the inversion operation is proportional to transmittance, the
+      inversion is arithmetically correct, and the resulting positive
+      has intact tonal relationships from toe to shoulder. Gamma encoding
+      — the <code>v^(1/2.2)</code> step that prepares the image for display
+      — is then applied as the final step, either by Lightroom's output
+      transform or by the operating system's colour management pipeline.
+      This is the only order in which all three operations (normalise,
+      invert, gamma-encode) produce a mathematically correct result.
+    </div>
+  </div>
+
+  <div class="note">
+    <div class="note-head">toggle the import profile to see the damage</div>
+    <div class="note-body">
+      Switch between the two import modes using the buttons above. In the
+      pipeline, stage 3 highlights red (wrong) or green (correct). In the
+      result cards below, the dashed grey line in the left card shows the
+      correct curve overlaid on the damaged one — the gap between them is
+      the tonal information that was irreversibly destroyed by applying the
+      tone curve before inversion. <strong>Notice that the damage is worst
+      at the extremes: deep shadows in the scene (high density in the
+      negative, low electrons, left side of the x-axis) and bright
+      highlights (low density, high electrons, right side) both suffer
+      more than the midtones.</strong> This is the characteristic signature
+      of a premature gamma or tone-curve operation on negative film data.
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     CHART.JS — UMD build from CDN, exposes window.Chart global
+     ═══════════════════════════════════════════════════════════════════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONSTANTS
+   ═══════════════════════════════════════════════════════════════════════════ */
+const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+const gc   = dark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.06)';   /* grid colour */
+const tc   = dark ? '#555'                  : '#bbb';               /* tick colour */
+const N    = 90;  /* number of sample points along the logH axis */
+
+/* film density limits for color negative */
+const Dmin = 0.05;  /* base + fog density (clear film base) */
+const Dmax = 2.26;  /* maximum density (fully exposed shadow) */
+const Tmax = Math.pow(10, -Dmin);   /* transmittance at Dmin ≈ 0.891 */
+const Tmin = Math.pow(10, -Dmax);   /* transmittance at Dmax ≈ 0.0055 */
+
+/* chart colour palette */
+const COL_OK  = dark ? '#60aaff' : '#185FA5';          /* correct path — blue */
+const COL_BAD = dark ? '#f09595' : '#E24B4A';          /* wrong path — red */
+const COL_NEU = dark ? '#aaa'    : '#555';             /* neutral — grey */
+const COL_DIM = dark ? 'rgba(160,160,160,.28)' : 'rgba(80,80,80,.20)';  /* ghost overlay */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SHARED MUTABLE STATE
+   Single object read by all plugins and render logic.
+   Avoids stale closure bugs that prevent slider/toggle reactivity.
+   ═══════════════════════════════════════════════════════════════════════════ */
+let mode = 'early';   /* 'early' = tone curve at import | 'late' = linear import */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHART INSTANCE REGISTRY
+   Keyed by canvas id. Charts are created once then updated in-place via
+   chart.data.datasets = [...]; chart.update('none').
+   Rebuilding would cause a flash — update is frame-perfect.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const CH = {};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MATH UTILITIES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* evenly-spaced array of n values from a to b */
+function linspace(a, b, n) {
+  return Array.from({ length: n }, (_, i) => a + (b - a) * i / (n - 1));
+}
+
+/* H&D curve for color negative — piecewise linear interpolation
+   between measured (logH, D) control points.
+   Extrapolates flat beyond the endpoints. */
+function hdCurve(logH) {
+  const pts = [
+    [-1.5, 0.05], [-1.0, 0.06], [-0.5, 0.09], [0, 0.18],
+    [0.3,  0.35], [0.6,  0.60], [0.9,  0.90], [1.2, 1.20],
+    [1.5,  1.50], [1.8,  1.78], [2.1,  2.00], [2.4, 2.15],
+    [2.7,  2.22], [3.0,  2.25], [3.3,  2.26]
+  ];
+  for (let i = 0; i < pts.length - 1; i++) {
+    if (logH >= pts[i][0] && logH <= pts[i + 1][0]) {
+      const t = (logH - pts[i][0]) / (pts[i + 1][0] - pts[i][0]);
+      return pts[i][1] + t * (pts[i + 1][1] - pts[i][1]);
+    }
+  }
+  return logH < pts[0][0] ? pts[0][1] : pts[pts.length - 1][1];
+}
+
+/* Density → normalised transmittance in [0,1]
+   Physics: T = 10^(-D)
+   Normalised so Dmin → 1.0 and Dmax → 0.0, matching the sensor's
+   relative electron count (more light = more electrons). */
+function DtoNorm(D) {
+  const T = Math.pow(10, -D);
+  return Math.max(0, Math.min(1, (T - Tmin) / (Tmax - Tmin)));
+}
+
+/* sRGB gamma encode: linear [0,1] → gamma-encoded [0,1]
+   Applied at display output in the correct pipeline.
+   In the wrong pipeline, this (or an equivalent tone curve) is applied
+   prematurely at import, before inversion. */
+function gammaEnc(v) {
+  return v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(v, 1 / 2.2) - 0.055;
+}
+
+/* sRGB gamma decode: gamma-encoded → linear
+   Used in the wrong pipeline to simulate Lightroom "displaying" the
+   result — the display applies this implicitly, so we apply it
+   explicitly to show the final brightness value. */
+function gammaDec(v) {
+  return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.2);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PRE-COMPUTED STATIC DATA
+   These arrays never change regardless of mode — they represent physics
+   upstream of the Lightroom import decision.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const logHs = linspace(-1.5, 3.3, N);
+const Ds    = logHs.map(hdCurve);       /* density at each logH sample */
+const Tn    = Ds.map(DtoNorm);          /* normalised transmittance (= linear sensor output) */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHART.JS PLUGIN: ZONE BACKGROUND (left chart only)
+   Shades toe (blue), linear (green), shoulder (amber) regions behind the
+   H&D curve, using the same 20%/78% logH thresholds as graph22.
+   Named singleton — not a factory — to avoid plugin re-registration bugs.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const ZONE_PLUGIN = {
+  id: 'zone',
+  beforeDraw(chart) {
+    const { ctx, chartArea, scales } = chart;
+    if (!chartArea) return;
+    const { left, right, top, bottom } = chartArea;
+    const span  = 3.3 - (-1.5);
+    const xToe  = scales.x.getPixelForValue(-1.5 + span * 0.20);
+    const xSho  = scales.x.getPixelForValue(-1.5 + span * 0.78);
+    ctx.save();
+    ctx.globalAlpha = dark ? 0.10 : 0.12;
+    ctx.fillStyle = '#6090d0'; ctx.fillRect(left, top, xToe - left,  bottom - top);
+    ctx.fillStyle = '#50a860'; ctx.fillRect(xToe, top, xSho - xToe,  bottom - top);
+    ctx.fillStyle = '#c87030'; ctx.fillRect(xSho, top, right - xSho, bottom - top);
+    ctx.restore();
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHART OPTIONS FACTORIES
+   Returns Chart.js options objects. Kept as functions so they pick up
+   the current tc/gc values (set at load, stable for life of the page).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Options for the H&D curve (stage 1) — D on y, logH on x */
+function hdOpts() {
+  return {
+    responsive: true, maintainAspectRatio: false,
+    animation: false, parsing: false,
+    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+    layout: { padding: { left: 2, right: 2, top: 4, bottom: 2 } },
+    scales: {
+      x: { type: 'linear', min: -1.5, max: 3.3, display: true,
+           title: { display: true, text: 'log H', font: { size: 8 }, color: tc },
+           grid: { color: gc }, ticks: { color: tc, font: { size: 8 }, maxTicksLimit: 4 } },
+      y: { min: 0, max: 3, display: true,
+           title: { display: true, text: 'D', font: { size: 8 }, color: tc },
+           grid: { color: gc }, ticks: { color: tc, font: { size: 8 }, maxTicksLimit: 4 } }
+    }
+  };
+}
+
+/* Options for stages 2–5 — density D on x, normalised signal [0,1] on y */
+function miniOpts(xLbl, yLbl) {
+  return {
+    responsive: true, maintainAspectRatio: false,
+    animation: false, parsing: false,
+    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+    layout: { padding: { left: 2, right: 2, top: 4, bottom: 2 } },
+    scales: {
+      x: { type: 'linear', min: 0, max: Dmax, display: true,
+           title: { display: !!xLbl, text: xLbl, font: { size: 8 }, color: tc },
+           grid: { color: gc }, ticks: { color: tc, font: { size: 8 }, maxTicksLimit: 4 } },
+      y: { min: 0, max: 1.05, display: true,
+           title: { display: !!yLbl, text: yLbl, font: { size: 8 }, color: tc },
+           grid: { color: gc }, ticks: { color: tc, font: { size: 8 }, maxTicksLimit: 3 } }
+    }
+  };
+}
+
+/* Options for the two result cards — same x/y as mini but with axis labels */
+function resultOpts() {
+  return {
+    responsive: true, maintainAspectRatio: false,
+    animation: false, parsing: false,
+    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+    layout: { padding: 4 },
+    scales: {
+      x: { type: 'linear', min: 0, max: Dmax, display: true,
+           title: { display: true, text: 'density D  (shadows → highlights in scene)',
+                    font: { size: 8 }, color: tc },
+           grid: { color: gc }, ticks: { color: tc, font: { size: 8 }, maxTicksLimit: 5 } },
+      y: { min: 0, max: 1.05, display: true,
+           title: { display: true, text: 'display brightness',
+                    font: { size: 8 }, color: tc },
+           grid: { color: gc }, ticks: { color: tc, font: { size: 8 }, maxTicksLimit: 4 } }
+    }
+  };
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DATASET HELPER
+   Returns a Chart.js dataset descriptor for a line series.
+   ═══════════════════════════════════════════════════════════════════════════ */
+function ds(data, color, dash, width) {
+  return {
+    data,
+    borderColor:  color,
+    borderWidth:  width || 1.5,
+    borderDash:   dash  || [],
+    fill:         false,
+    pointRadius:  0,
+    tension:      0.3
+  };
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHART CREATE / UPDATE HELPER
+   Creates chart on first call; updates datasets in-place on subsequent calls.
+   Using chart.update('none') skips animation — essential for interactive feel.
+   ═══════════════════════════════════════════════════════════════════════════ */
+function putChart(id, datasets, opts, plugins) {
+  const ctx = document.getElementById(id);
+  if (CH[id]) {
+    CH[id].data.datasets = datasets;
+    CH[id].update('none');
+  } else {
+    CH[id] = new Chart(ctx, {
+      type:    'line',
+      data:    { datasets },
+      options: opts,
+      plugins: plugins || []
+    });
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RENDER
+   Called once on load and again on every toggle click.
+   Computes all derived signal arrays from the current mode, then pushes
+   new datasets to each chart and updates the text annotations.
+
+   Pipeline math (both modes share stages 1–2):
+     stage 1 → Ds  (H&D curve, unchanged)
+     stage 2 → Tn  (normalised transmittance = linear sensor output, unchanged)
+
+   Wrong path (mode === 'early'):
+     stage 3 → gammaEnc(Tn)           import applies tone curve
+     stage 4 → 1 − gammaEnc(Tn)       inversion of pre-curved signal
+     stage 5 → gammaDec(1 − gammaEnc) display (gamma already baked in)
+
+   Correct path (mode === 'late'):
+     stage 3 → Tn                      linear passthrough
+     stage 4 → 1 − Tn                  clean linear inversion
+     stage 5 → gammaEnc(1 − Tn)        gamma applied last, at display
+   ═══════════════════════════════════════════════════════════════════════════ */
+function render() {
+  /* stage 3: signal after import */
+  const imported  = mode === 'early' ? Tn.map(gammaEnc) : Tn.slice();
+
+  /* stage 4: after inversion (simple arithmetic flip in both cases) */
+  const inverted  = imported.map(v => 1 - v);
+
+  /* stage 5: after display gamma
+     wrong path: gamma was already applied at import, so display only applies
+                 the inverse (decode) — net result is a double-gamma distortion.
+     correct path: gamma applied here for the first and only time. */
+  const displayed = mode === 'early'
+    ? inverted.map(v => gammaDec(v))
+    : inverted.map(v => gammaEnc(v));
+
+  /* pre-compute both result curves regardless of mode — shown simultaneously */
+  const goodDisp = Tn.map(v => gammaEnc(1 - v));                        /* correct */
+  const badDisp  = Tn.map(v => gammaDec(1 - gammaEnc(v)));              /* wrong */
+
+  /* ── stage charts ── */
+
+  /* stage 1: H&D curve — static, zone background */
+  putChart('c0',
+    [ds(logHs.map((x, i) => ({ x, y: Ds[i] })), COL_NEU)],
+    hdOpts(), [ZONE_PLUGIN]);
+
+  /* stage 2: linear electron count — static, always the same */
+  putChart('c1',
+    [ds(Ds.map((d, i) => ({ x: d, y: Tn[i] })), COL_NEU)],
+    miniOpts('D', 'norm'));
+
+  /* stage 3: Lightroom import — the decision point
+     Ghost line shows the linear (correct) signal for comparison in bad mode. */
+  const impColor = mode === 'early' ? COL_BAD : COL_OK;
+  putChart('c2', [
+    ds(Ds.map((d, i) => ({ x: d, y: Tn[i] })),       COL_DIM, [3, 3]),  /* ghost */
+    ds(Ds.map((d, i) => ({ x: d, y: imported[i] })),  impColor)           /* actual */
+  ], miniOpts('D', 'signal'));
+
+  /* stage 4: after inversion */
+  const invColor = mode === 'early' ? COL_BAD : COL_OK;
+  putChart('c3',
+    [ds(Ds.map((d, i) => ({ x: d, y: inverted[i] })), invColor)],
+    miniOpts('D', 'inverted'));
+
+  /* stage 5: display output */
+  const dispColor = mode === 'early' ? COL_BAD : COL_OK;
+  putChart('c4',
+    [ds(Ds.map((d, i) => ({ x: d, y: displayed[i] })), dispColor)],
+    miniOpts('D', 'bright.'));
+
+  /* ── result cards ── */
+
+  /* bad result: correct curve as dashed ghost + bad curve on top */
+  putChart('c-bad', [
+    ds(Ds.map((d, i) => ({ x: d, y: goodDisp[i] })), COL_DIM,  [3, 3]),
+    ds(Ds.map((d, i) => ({ x: d, y: badDisp[i]  })), COL_BAD)
+  ], resultOpts());
+
+  /* good result: correct curve only */
+  putChart('c-good',
+    [ds(Ds.map((d, i) => ({ x: d, y: goodDisp[i] })), COL_OK)],
+    resultOpts());
+
+  /* ── text annotations ── */
+  const s2n = document.getElementById('s2-note');
+  const s3n = document.getElementById('s3-note');
+  const s4n = document.getElementById('s4-note');
+  const a2  = document.getElementById('a2');
+  const a3  = document.getElementById('a3');
+  const a4  = document.getElementById('a4');
+  const st2 = document.getElementById('st2');
+
+  if (mode === 'early') {
+    st2.className = 'stage hl-bad';
+    s2n.innerHTML = 'tone curve applied<br>on import — wrong';  s2n.className = 's-note bad';
+    s3n.innerHTML = 'signal already<br>distorted';              s3n.className = 's-note bad';
+    s4n.innerHTML = 'display only<br>(gamma already baked)';    s4n.className = 's-note bad';
+    a2.textContent = 'LR tone curve';     a2.className = 'a-lbl bad';
+    a3.textContent = 'invert (damaged)';  a3.className = 'a-lbl bad';
+    a4.textContent = 'display';           a4.className = 'a-lbl';
+  } else {
+    st2.className = 'stage hl-good';
+    s2n.innerHTML = 'linear profile:<br>no transform';     s2n.className = 's-note good';
+    s3n.innerHTML = 'clean inversion<br>possible';         s3n.className = 's-note good';
+    s4n.innerHTML = 'gamma applied<br>here — correct';     s4n.className = 's-note good';
+    a2.textContent = 'LR linear';        a2.className = 'a-lbl good';
+    a3.textContent = 'invert';           a3.className = 'a-lbl';
+    a4.textContent = 'gamma + display';  a4.className = 'a-lbl good';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TOGGLE HANDLER
+   Updates mode, swaps active pill styling, re-renders.
+   ═══════════════════════════════════════════════════════════════════════════ */
+function setMode(m) {
+  mode = m;
+  document.getElementById('tog-early').classList.toggle('on', m === 'early');
+  document.getElementById('tog-late').classList.toggle('on',  m === 'late');
+  render();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   INITIAL RENDER
+   ═══════════════════════════════════════════════════════════════════════════ */
+render();
+</script>
+</body>
+</html>

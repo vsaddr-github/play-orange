@@ -1,0 +1,154 @@
+<!-- vtt-footer.html · VLAD'S TEST TARGET shared footer
+     Injected by vtt-branding.js into every graph page.
+     Place this file in the same folder as the graph HTML files.
+     CSS design tokens are declared in vtt-header.html — footer
+     inherits them via :root and assumes the header loaded first. -->
+
+<style>
+/* ── footer block ─────────────────────────────────────────────────────────
+   Warm surface background to visually close the page.
+   Two rows: brand + links row, then a thin rule + copyright row.
+   ───────────────────────────────────────────────────────────────────────── */
+.vtt-footer {
+  margin-top:   40px;
+  border-top:   0.5px solid var(--vtt-rule);
+  padding:      20px 28px 26px;
+  background:   var(--vtt-surface);
+}
+
+.vtt-footer-inner {
+  max-width: 920px;
+  margin:    0 auto;
+}
+
+/* top row — brand left, links right */
+.vtt-footer-top {
+  display:         flex;
+  align-items:     flex-start;
+  justify-content: space-between;
+  gap:             24px;
+  margin-bottom:   14px;
+  flex-wrap:       wrap;
+}
+
+.vtt-footer-brand-title {
+  font-family:    var(--vtt-rounded);
+  font-weight:    800;
+  font-size:      13px;
+  letter-spacing: .01em;
+  color:          var(--vtt-ink);
+  margin-bottom:  0;
+}
+.vtt-footer-brand-title .vtt-dot {
+  color:       var(--vtt-accent);
+  margin:      0 6px;
+  font-weight: 300;
+  font-family: var(--vtt-mono);
+}
+
+/* link cluster — right side of top row */
+.vtt-footer-links {
+  display:         flex;
+  gap:             6px;
+  flex-wrap:       wrap;
+  justify-content: flex-end;
+  align-items:     flex-start;
+}
+
+.vtt-footer-links a {
+  font-family:     var(--vtt-mono);
+  font-size:       10px;
+  font-weight:     400;
+  letter-spacing:  .04em;
+  color:           var(--vtt-ink2);
+  text-decoration: none;
+  padding:         3px 9px;
+  border:          0.5px solid var(--vtt-rule);
+  border-radius:   3px;
+  white-space:     nowrap;
+  transition:      color .12s, border-color .12s;
+}
+.vtt-footer-links a:hover { color: var(--vtt-ink); }
+
+/* Amazon store link — accent colour, no fill */
+.vtt-footer-links a.vtt-shop-link {
+  color:        var(--vtt-accent);
+  border-color: var(--vtt-accent-dim);
+}
+.vtt-footer-links a.vtt-shop-link:hover {
+  border-color: var(--vtt-accent);
+}
+
+/* divider */
+.vtt-footer-rule {
+  border:     none;
+  border-top: 0.5px solid rgba(26,24,20,.10);
+  margin:     0 0 12px;
+}
+
+/* bottom row — copyright left, series label right */
+.vtt-footer-bottom {
+  display:         flex;
+  justify-content: space-between;
+  align-items:     center;
+  flex-wrap:       wrap;
+  gap:             8px;
+}
+
+.vtt-footer-copy {
+  font-family:    var(--vtt-mono);
+  font-size:      10px;
+  font-weight:    400;
+  letter-spacing: .04em;
+  color:          var(--vtt-ink3);
+}
+
+.vtt-footer-series {
+  font-family:    var(--vtt-mono);
+  font-size:      10px;
+  font-weight:    400;
+  letter-spacing: .03em;
+  color:          var(--vtt-ink3);
+}
+.vtt-footer-series em {
+  font-style: normal;
+  color:      var(--vtt-accent);
+}
+</style>
+
+<footer class="vtt-footer">
+  <div class="vtt-footer-inner">
+
+    <!-- top row: brand + links -->
+    <div class="vtt-footer-top">
+      <div>
+        <div class="vtt-footer-brand-title">VLADS TEST TARGET</div>
+      </div>
+
+      <div class="vtt-footer-links">
+        <a href="film4ever.html">← series index</a>
+        <a href="https://www.film4ever.info/home"
+           target="_blank" rel="noopener">film4ever.info</a>
+        <a href="https://medium.com/@vladstesttarget"
+           target="_blank" rel="noopener">medium / @vladstesttarget</a>
+        <a href="https://amzn.to/3IhNPO2"
+           target="_blank" rel="noopener"
+           class="vtt-shop-link">Amazon store</a>
+      </div>
+    </div>
+
+    <hr class="vtt-footer-rule">
+
+    <!-- bottom row: copyright + series tag -->
+    <div class="vtt-footer-bottom">
+      <div class="vtt-footer-copy">
+        &copy; <script>document.write(new Date().getFullYear())</script> VLADS TEST TARGET
+        &nbsp;&middot;&nbsp; for educational use
+      </div>
+      <div class="vtt-footer-series">
+        part of the <em>film scanning physics</em> series
+      </div>
+    </div>
+
+  </div>
+</footer>

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>graph1 — H&D curve · electron well fill</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:    #ffffff;
+  --bg2:   #f5f4f1;
+  --border: rgba(0,0,0,.12);
+  --border2:rgba(0,0,0,.20);
+  --text:  #1a1a18;
+  --text2: #5c5b57;
+  --text3: #9a9892;
+  --mono:  'DM Mono','Menlo',monospace;
+  --sans:  system-ui,-apple-system,sans-serif;
+  --radius:10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:    #18181a;
+    --bg2:   #222224;
+    --border: rgba(255,255,255,.10);
+    --border2:rgba(255,255,255,.18);
+    --text:  #e8e7e2;
+    --text2: #9a9892;
+    --text3: #5c5b57;
+  }
+}
+html,body { background:var(--bg); color:var(--text); font-family:var(--sans); }
+body { padding:24px 20px 40px; max-width:860px; margin:0 auto; }
+
+.eyebrow  { font-size:11px; font-family:var(--mono); color:var(--text3); letter-spacing:.06em; margin-bottom:5px; }
+h1        { font-size:20px; font-weight:500; margin-bottom:3px; line-height:1.25; }
+h1 em     { font-style:italic; color:var(--text2); }
+.subtitle { font-size:13px; color:var(--text2); line-height:1.65; margin-bottom:20px; max-width:640px; }
+.slider-hint { font-size:10px; font-family:var(--mono); color:var(--text3); margin-left:4px; letter-spacing:.02em; }
+.fact-strip { display:grid; grid-template-columns:repeat(3,1fr); gap:0; border:0.5px solid var(--border); border-radius:var(--radius); overflow:hidden; margin:20px 0; }
+.fact { padding:14px 16px; border-right:0.5px solid var(--border); background:var(--bg2); }
+.fact:last-child { border-right:none; }
+.fact-num { font-size:26px; font-weight:500; font-family:var(--mono); color:var(--text); line-height:1; margin-bottom:4px; }
+.fact-num em { font-style:normal; font-size:14px; color:var(--text3); }
+.fact-desc { font-size:12px; color:var(--text2); line-height:1.5; font-weight:300; }
+hr { border:none; border-top:0.5px solid var(--border); margin:28px 0; }
+.notes { display:flex; flex-direction:column; gap:14px; margin-bottom:8px; }
+.note  { border-left:2px solid var(--border); padding:0 0 0 16px; }
+.note-head { font-size:11px; font-family:var(--mono); color:var(--text3); letter-spacing:.04em; margin-bottom:5px; }
+.note-body { font-size:14px; color:var(--text2); line-height:1.65; }
+.note-body strong { color:var(--text); font-weight:500; }
+.note-body code { font-family:var(--mono); font-size:12px; background:var(--bg2); padding:1px 5px; border-radius:3px; color:var(--text); }
+.film-selector { display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap; }
+.fs-btn { font-size:11px; padding:4px 11px; border:0.5px solid var(--border2); border-radius:20px; cursor:pointer; background:transparent; color:var(--text2); font-family:var(--mono); transition:all .12s; }
+.fs-btn.on { background:var(--bg2); color:var(--text); border-color:var(--border2); }
+.slider-row { display:flex; align-items:center; gap:10px; margin-bottom:12px; font-size:12px; color:var(--text2); font-family:var(--mono); }
+.slider-row input[type=range] { flex:1; accent-color:var(--text); }
+.slider-val { min-width:70px; text-align:right; font-size:12px; color:var(--text); }
+.charts-grid { display:grid; grid-template-columns:1fr 1fr; gap:0; border:0.5px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.chart-panel { padding:12px 14px; background:var(--bg); }
+.chart-panel-r { border-left:0.5px solid var(--border); background:var(--bg2); }
+.axis-label { font-size:10px; color:var(--text3); font-family:var(--mono); margin-bottom:5px; }
+.chart-wrap { position:relative; height:300px; }
+.zone-legend { display:flex; gap:8px; flex-wrap:wrap; margin-top:7px; }
+.zl-item { display:flex; align-items:center; gap:4px; font-size:10px; color:var(--text3); font-family:var(--mono); }
+.zl-dot { width:7px; height:7px; border-radius:1px; flex-shrink:0; }
+.readout-bar { display:flex; gap:0; margin-top:12px; border:0.5px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.rb-item { flex:1; padding:10px 12px; border-right:0.5px solid var(--border); }
+.rb-item:last-child { border-right:none; }
+.rb-key { font-size:10px; color:var(--text3); font-family:var(--mono); margin-bottom:4px; }
+.rb-val { font-size:13px; font-family:var(--mono); color:var(--text); font-weight:500; }
+@media (max-width:560px) {
+  .charts-grid { grid-template-columns:1fr; }
+  .chart-panel-r { border-left:none; border-top:0.5px solid var(--border); }
+  .readout-bar { flex-wrap:wrap; }
+  .rb-item { flex:1 1 45%; border-bottom:0.5px solid var(--border); }
+}
+</style>
+<script src="vtt-branding.js" defer></script>
+</head>
+<body>
+<div id="vtt-header-mount"></div>
+
+<p class="eyebrow">graph1 &nbsp;·&nbsp; film scanning pipeline</p>
+<h1>H&amp;D curve <em>&rarr;</em> electron well fill</h1>
+<p class="subtitle">How scene log exposure maps through the film's characteristic curve to density — and how that density translates into a count of electrons trapped in a 14-bit sensor photosite. Equal steps in log exposure produce equal steps in density, but very unequal steps in electron count.</p>
+
+<div class="film-selector" id="film-sel">
+  <button class="fs-btn on" data-film="neg">color negative</button>
+  <button class="fs-btn" data-film="slide">slide / reversal</button>
+  <button class="fs-btn" data-film="pan">B&amp;W panchromatic</button>
+</div>
+
+<div class="slider-row">
+  <span>log H</span>
+  <input type="range" id="probe" min="0" max="100" value="45" step="1">
+  <span class="slider-val" id="probe-val">—</span>
+  <span class="slider-hint">← drag to explore</span>
+</div>
+
+<div class="charts-grid">
+  <div class="chart-panel">
+    <div class="axis-label">density D &nbsp;·&nbsp; log exposure H (log lux·s)</div>
+    <div class="chart-wrap"><canvas id="c-hd" role="img" aria-label="Film H&D characteristic curve with movable probe">H&D curve</canvas></div>
+    <div class="zone-legend">
+      <span class="zl-item"><span class="zl-dot" style="background:#6090d0"></span>toe</span>
+      <span class="zl-item"><span class="zl-dot" style="background:#50a860"></span>linear</span>
+      <span class="zl-item"><span class="zl-dot" style="background:#c87030"></span>shoulder</span>
+    </div>
+  </div>
+  <div class="chart-panel chart-panel-r">
+    <div class="axis-label">electron count &nbsp;·&nbsp; 0 → 16 383 (14-bit)</div>
+    <div class="chart-wrap"><canvas id="c-well" role="img" aria-label="Electron well fill vs density, exponential curve">Electron well fill</canvas></div>
+  </div>
+</div>
+
+<div class="readout-bar">
+  <div class="rb-item"><div class="rb-key">log H</div><div class="rb-val" id="r-logh">—</div></div>
+  <div class="rb-item"><div class="rb-key">density D</div><div class="rb-val" id="r-d">—</div></div>
+  <div class="rb-item"><div class="rb-key">transmittance</div><div class="rb-val" id="r-t">—</div></div>
+  <div class="rb-item"><div class="rb-key">electrons</div><div class="rb-val" id="r-e">—</div></div>
+  <div class="rb-item"><div class="rb-key">DN / 16 383</div><div class="rb-val" id="r-dn">—</div></div>
+  <div class="rb-item"><div class="rb-key">zone</div><div class="rb-val" id="r-zone">—</div></div>
+</div>
+
+<div class="fact-strip">
+  <div class="fact">
+    <div class="fact-num">T = 10<em>^−D</em></div>
+    <div class="fact-desc">Transmittance is an exponential function of density. Each unit increase in D reduces transmitted light by 10×. This is why equal D steps produce unequal electron steps.</div>
+  </div>
+  <div class="fact">
+    <div class="fact-num">3<em> zones</em></div>
+    <div class="fact-desc">Toe, linear, and shoulder. Only in the linear zone does a given change in log H produce a proportional change in density — and a predictable electron count.</div>
+  </div>
+  <div class="fact">
+    <div class="fact-num">14<em>-bit</em></div>
+    <div class="fact-desc">A 14-bit sensor well holds 16,383 electrons. The probe dot on the right chart shows exactly how many fall into the well at each point on the H&amp;D curve.</div>
+  </div>
+</div>
+
+<hr>
+
+<div class="notes">
+
+  <div class="note">
+    <div class="note-head">what the H&amp;D curve shows</div>
+    <div class="note-body">
+      The Hurter &amp; Driffield characteristic curve plots density D (vertical) against log exposure H (horizontal). Density is a measure of how opaque the developed film is at any point — higher density means more silver or dye, less light passes through. Log exposure is used because the eye and film both respond logarithmically to light: each step on the horizontal axis represents a doubling (or halving) of exposure, i.e. one stop. <strong>The slope of the curve at any point is the local contrast of the film</strong> — steep = contrasty, shallow = compressed.
+    </div>
+  </div>
+
+  <div class="note">
+    <div class="note-head">toe, linear, shoulder — why they matter for scanning</div>
+    <div class="note-body">
+      The toe is the underexposed end: shadows in the scene that didn't receive enough light to develop fully. The curve here is shallow — a large change in exposure produces a small change in density, so shadow detail is compressed. The linear region in the middle is where the curve is straight: tonal relationships are preserved faithfully and inversion is mathematically clean. The shoulder is the overexposed end: highlights that have driven the film to maximum density. <strong>Any detail that falls in the toe or shoulder of the original exposure cannot be fully recovered during scanning inversion</strong> — the compression happened in the chemistry, before the scanner sees the film.
+    </div>
+  </div>
+
+  <div class="note">
+    <div class="note-head">why the electron count curve is exponential</div>
+    <div class="note-body">
+      Transmittance is defined as <code>T = 10^(−D)</code>. The sensor photosite fills with electrons in proportion to T — it is a photon counter, not a density meter. So while the H&amp;D curve is plotted with density on a linear vertical axis, the electron count is an exponential function of that density. <strong>Drag the probe from the toe into the linear zone and watch the electron count on the right chart jump disproportionately</strong> — a small move in D near the low end produces a large change in electrons, while the same D step near Dmax produces almost nothing. This asymmetry is why shadow detail in a scanned negative always has lower signal-to-noise ratio than highlight detail.
+    </div>
+  </div>
+
+  <div class="note">
+    <div class="note-head">reversal film — same curve, opposite direction</div>
+    <div class="note-body">
+      Switch to slide/reversal. The curve flips: more exposure produces lower density, because reversal film is a positive — the bright parts of the scene become the thin, transparent parts of the slide. The slope is steeper (gamma ≈ 1.8 vs ≈ 0.65 for negative), meaning contrast is higher and the toe and shoulder compress more aggressively. <strong>A one-stop error when scanning a slide destroys more tonal information than the same error on a negative</strong> — which is why reversal film has a reputation for demanding precise exposure, both at the camera stage and at the scanner stage.
+    </div>
+  </div>
+
+  <div class="note">
+    <div class="note-head">practical implication — what to aim for when scanning</div>
+    <div class="note-body">
+      The goal when setting scanner exposure is to land the brightest part of the film — the base-plus-fog area, the thinnest part of the negative — as close to the sensor ceiling as possible without clipping. This maximises the electron count in the usable density range, which maximises signal-to-noise ratio before any inversion or colour correction is applied. <strong>Scanning "to the right" in raw histogram terms is not overexposure — it is deliberate use of the sensor's full dynamic range.</strong> The orange mask in color negative film means the base density is never truly clear, so the ceiling is never quite reached, but the principle still holds: more electrons in the raw scan means more information to work with downstream.
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const MAX_DN=16383;
+const dark=matchMedia('(prefers-color-scheme: dark)').matches;
+const gc=dark?'rgba(255,255,255,.06)':'rgba(0,0,0,.06)';
+const tc=dark?'#666':'#aaa';
+
+const films={
+  neg:{
+    logH:[-1.5,-1.0,-0.5,0,0.3,0.6,0.9,1.2,1.5,1.8,2.1,2.4,2.7,3.0,3.3],
+    D:   [0.05,0.06,0.09,0.18,0.35,0.60,0.90,1.20,1.50,1.78,2.00,2.15,2.22,2.25,2.26]
+  },
+  slide:{
+    logH:[-1.5,-1.0,-0.5,0,0.3,0.6,0.9,1.2,1.5,1.8,2.1,2.4,2.7,3.0,3.3],
+    D:   [3.00,2.95,2.80,2.40,1.95,1.45,1.00,0.65,0.38,0.20,0.10,0.06,0.04,0.03,0.03]
+  },
+  pan:{
+    logH:[-1.5,-1.0,-0.5,0,0.3,0.6,0.9,1.2,1.5,1.8,2.1,2.4,2.7,3.0,3.3],
+    D:   [0.04,0.05,0.10,0.25,0.50,0.80,1.10,1.38,1.60,1.78,1.90,1.96,1.99,2.00,2.00]
+  }
+};
+
+let curFilm='neg', probeT=45;
+
+function interp(xs,ys,x){
+  if(x<=xs[0])return ys[0];
+  if(x>=xs[xs.length-1])return ys[ys.length-1];
+  for(let i=0;i<xs.length-1;i++){
+    if(x>=xs[i]&&x<=xs[i+1]){const t=(x-xs[i])/(xs[i+1]-xs[i]);return ys[i]+t*(ys[i+1]-ys[i]);}
+  }
+  return ys[ys.length-1];
+}
+
+function getProbe(){
+  const f=films[curFilm];
+  const logH=f.logH[0]+(probeT/100)*(f.logH[f.logH.length-1]-f.logH[0]);
+  const D=interp(f.logH,f.D,logH);
+  const T=Math.pow(10,-D);
+  const Tmax=Math.pow(10,-Math.min(...f.D));
+  const Tmin=Math.pow(10,-Math.max(...f.D));
+  const electrons=Math.round(Math.max(0,Math.min(1,(T-Tmin)/(Tmax-Tmin)))*MAX_DN);
+  return{logH,D,T,electrons};
+}
+
+function getZone(logH){
+  const f=films[curFilm];
+  const span=f.logH[f.logH.length-1]-f.logH[0];
+  if(logH<f.logH[0]+span*0.20)return{label:'toe',color:'#5b8dd9'};
+  if(logH>f.logH[0]+span*0.78)return{label:'shoulder',color:'#c87533'};
+  return{label:'linear',color:'#3a9a5c'};
+}
+
+function buildElectronCurve(){
+  const f=films[curFilm];
+  const Dmax=Math.max(...f.D);
+  const Tmax=Math.pow(10,-Math.min(...f.D));
+  const Tmin=Math.pow(10,-Dmax);
+  return Array.from({length:121},(_,i)=>{
+    const D=(i/120)*Dmax*1.05;
+    const T=Math.pow(10,-D);
+    return{x:D,y:Math.max(0,Math.min(MAX_DN,Math.round((T-Tmin)/(Tmax-Tmin)*MAX_DN)))};
+  });
+}
+
+const ZONE_BG={id:'zonebg',beforeDraw(chart){
+  const{ctx,chartArea,scales}=chart;
+  if(!chartArea)return;
+  const f=films[curFilm],span=f.logH[f.logH.length-1]-f.logH[0];
+  const xToe=scales.x.getPixelForValue(f.logH[0]+span*0.20);
+  const xSho=scales.x.getPixelForValue(f.logH[0]+span*0.78);
+  const{left,right,top,bottom}=chartArea;
+  ctx.save();ctx.globalAlpha=dark?0.12:0.15;
+  ctx.fillStyle='#6090d0';ctx.fillRect(left,top,xToe-left,bottom-top);
+  ctx.fillStyle='#50a860';ctx.fillRect(xToe,top,xSho-xToe,bottom-top);
+  ctx.fillStyle='#c87030';ctx.fillRect(xSho,top,right-xSho,bottom-top);
+  ctx.restore();
+}};
+
+function probePlugin(getX,getY){
+  return{id:'probe'+Math.random(),afterDraw(chart){
+    const{ctx,chartArea,scales}=chart;
+    if(!chartArea)return;
+    const p=getProbe();
+    const px=scales.x.getPixelForValue(getX(p));
+    const py=scales.y.getPixelForValue(getY(p));
+    ctx.save();
+    ctx.strokeStyle=dark?'rgba(255,200,80,.7)':'rgba(150,80,0,.6)';
+    ctx.lineWidth=1;ctx.setLineDash([3,3]);
+    ctx.beginPath();ctx.moveTo(px,chartArea.top);ctx.lineTo(px,chartArea.bottom);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(chartArea.left,py);ctx.lineTo(chartArea.right,py);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle=dark?'#ffcc40':'#a04800';
+    ctx.beginPath();ctx.arc(px,py,5.5,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+  }};
+}
+
+let hdChart=null,wellChart=null;
+
+function buildHD(){
+  const f=films[curFilm];
+  const ctx=document.getElementById('c-hd');
+  if(hdChart){hdChart.destroy();hdChart=null;}
+  hdChart=new Chart(ctx,{
+    type:'line',
+    data:{datasets:[{data:f.logH.map((h,i)=>({x:h,y:f.D[i]})),borderColor:dark?'#bbb':'#333',borderWidth:2,fill:false,pointRadius:0,tension:0.4}]},
+    options:{responsive:true,maintainAspectRatio:false,animation:false,parsing:false,
+      plugins:{legend:{display:false},tooltip:{enabled:false}},
+      scales:{
+        x:{type:'linear',min:f.logH[0],max:f.logH[f.logH.length-1],title:{display:true,text:'log H',font:{size:10},color:tc},grid:{color:gc},ticks:{color:tc,font:{size:10},maxTicksLimit:7}},
+        y:{min:0,max:3.4,title:{display:true,text:'density D',font:{size:10},color:tc},grid:{color:gc},ticks:{color:tc,font:{size:10},stepSize:0.5}}
+      }},
+    plugins:[ZONE_BG,probePlugin(p=>p.logH,p=>p.D)]
+  });
+}
+
+function buildWell(){
+  const ctx=document.getElementById('c-well');
+  if(wellChart){wellChart.destroy();wellChart=null;}
+  wellChart=new Chart(ctx,{
+    type:'line',
+    data:{datasets:[{data:buildElectronCurve(),borderColor:dark?'rgba(180,180,180,.3)':'rgba(80,80,80,.22)',borderWidth:1.5,fill:false,pointRadius:0,tension:0.3}]},
+    options:{responsive:true,maintainAspectRatio:false,animation:false,parsing:false,
+      plugins:{legend:{display:false},tooltip:{enabled:false}},
+      scales:{
+        x:{type:'linear',min:0,max:Math.max(...films[curFilm].D)*1.05,title:{display:true,text:'density D',font:{size:10},color:tc},grid:{color:gc},ticks:{color:tc,font:{size:10},maxTicksLimit:7,callback:v=>v.toFixed(1)}},
+        y:{min:0,max:MAX_DN+400,title:{display:true,text:'electrons',font:{size:10},color:tc},grid:{color:gc},ticks:{color:tc,font:{size:10},maxTicksLimit:6,callback:v=>v>=1000?Math.round(v/1000)+'k':v}}
+      }},
+    plugins:[probePlugin(p=>p.D,p=>p.electrons)]
+  });
+}
+
+function updateReadouts(){
+  const{logH,D,T,electrons}=getProbe();
+  const zone=getZone(logH);
+  document.getElementById('probe-val').textContent='logH '+logH.toFixed(2);
+  document.getElementById('r-logh').textContent=logH.toFixed(2);
+  document.getElementById('r-d').textContent=D.toFixed(3);
+  document.getElementById('r-t').textContent=(T*100).toFixed(2)+'%';
+  document.getElementById('r-e').textContent=electrons.toLocaleString();
+  document.getElementById('r-dn').textContent=electrons.toLocaleString()+' / 16 383';
+  document.getElementById('r-zone').textContent=zone.label;
+  document.getElementById('r-zone').style.color=zone.color;
+  if(hdChart)hdChart.update('none');
+  if(wellChart)wellChart.update('none');
+}
+
+document.getElementById('probe').addEventListener('input',function(){probeT=parseInt(this.value);updateReadouts();});
+document.querySelectorAll('.fs-btn').forEach(btn=>{
+  btn.addEventListener('click',function(){
+    document.querySelectorAll('.fs-btn').forEach(b=>b.classList.remove('on'));
+    this.classList.add('on');curFilm=this.dataset.film;
+    buildHD();buildWell();updateReadouts();
+  });
+});
+
+buildHD();buildWell();updateReadouts();
+</script>
+<div id="vtt-footer-mount"></div>
+</body>
+</html>

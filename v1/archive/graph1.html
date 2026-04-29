@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>graph1 — H&D curve · electron well fill</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:       #ffffff;
+  --bg2:      #f5f4f1;
+  --border:   rgba(0,0,0,.12);
+  --border2:  rgba(0,0,0,.20);
+  --text:     #1a1a18;
+  --text2:    #5c5b57;
+  --text3:    #9a9892;
+  --mono:     'DM Mono', 'Menlo', monospace;
+  --sans:     system-ui, -apple-system, sans-serif;
+  --radius:   10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:    #18181a;
+    --bg2:   #222224;
+    --border: rgba(255,255,255,.10);
+    --border2:rgba(255,255,255,.18);
+    --text:  #e8e7e2;
+    --text2: #9a9892;
+    --text3: #5c5b57;
+  }
+}
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--sans); }
+body { padding: 24px 20px 40px; max-width: 860px; margin: 0 auto; }
+
+h1 { font-size: 13px; font-weight: 500; font-family: var(--mono); color: var(--text3); letter-spacing: .04em; margin-bottom: 14px; text-transform: lowercase; }
+
+.film-selector { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+.fs-btn {
+  font-size: 11px; padding: 4px 11px;
+  border: 0.5px solid var(--border2); border-radius: 20px;
+  cursor: pointer; background: transparent; color: var(--text2);
+  font-family: var(--mono); transition: all .12s;
+}
+.fs-btn.on { background: var(--bg2); color: var(--text); border-color: var(--border2); }
+
+.slider-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 12px; color: var(--text2); font-family: var(--mono); }
+.slider-row input[type=range] { flex: 1; accent-color: var(--text); }
+.slider-val { min-width: 70px; text-align: right; font-size: 12px; color: var(--text); }
+
+.charts-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0;
+  border: 0.5px solid var(--border); border-radius: var(--radius); overflow: hidden;
+}
+.chart-panel { padding: 12px 14px; background: var(--bg); }
+.chart-panel-r { border-left: 0.5px solid var(--border); background: var(--bg2); }
+.axis-label { font-size: 10px; color: var(--text3); font-family: var(--mono); margin-bottom: 5px; }
+.chart-wrap { position: relative; height: 300px; }
+
+.zone-legend { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 7px; }
+.zl-item { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--text3); font-family: var(--mono); }
+.zl-dot { width: 7px; height: 7px; border-radius: 1px; flex-shrink: 0; }
+
+.readout-bar {
+  display: flex; gap: 0; margin-top: 12px;
+  border: 0.5px solid var(--border); border-radius: var(--radius); overflow: hidden;
+}
+.rb-item { flex: 1; padding: 10px 12px; border-right: 0.5px solid var(--border); }
+.rb-item:last-child { border-right: none; }
+.rb-key { font-size: 10px; color: var(--text3); font-family: var(--mono); margin-bottom: 4px; }
+.rb-val { font-size: 13px; font-family: var(--mono); color: var(--text); font-weight: 500; }
+
+@media (max-width: 560px) {
+  .charts-grid { grid-template-columns: 1fr; }
+  .chart-panel-r { border-left: none; border-top: 0.5px solid var(--border); }
+  .readout-bar { flex-wrap: wrap; }
+  .rb-item { flex: 1 1 45%; border-right: 0.5px solid var(--border); border-bottom: 0.5px solid var(--border); }
+}
+</style>
+</head>
+<body>
+
+<h1>graph1 &nbsp;·&nbsp; film H&amp;D curve &amp; electron well fill</h1>
+
+<div class="film-selector" id="film-sel">
+  <button class="fs-btn on" data-film="neg">color negative</button>
+  <button class="fs-btn" data-film="slide">slide / reversal</button>
+  <button class="fs-btn" data-film="pan">B&amp;W panchromatic</button>
+</div>
+
+<div class="slider-row">
+  <span>log H</span>
+  <input type="range" id="probe" min="0" max="100" value="45" step="1">
+  <span class="slider-val" id="probe-val">—</span>
+</div>
+
+<div class="charts-grid">
+  <div class="chart-panel">
+    <div class="axis-label">density D &nbsp;·&nbsp; log exposure H (log lux·s)</div>
+    <div class="chart-wrap"><canvas id="c-hd" role="img" aria-label="Film H&D characteristic curve with movable probe">H&D curve</canvas></div>
+    <div class="zone-legend">
+      <span class="zl-item"><span class="zl-dot" style="background:#6090d0"></span>toe</span>
+      <span class="zl-item"><span class="zl-dot" style="background:#50a860"></span>linear</span>
+      <span class="zl-item"><span class="zl-dot" style="background:#c87030"></span>shoulder</span>
+    </div>
+  </div>
+  <div class="chart-panel chart-panel-r">
+    <div class="axis-label">electron count &nbsp;·&nbsp; 0 → 16 383 (14-bit)</div>
+    <div class="chart-wrap"><canvas id="c-well" role="img" aria-label="Electron well fill vs density, exponential curve">Electron well fill</canvas></div>
+  </div>
+</div>
+
+<div class="readout-bar">
+  <div class="rb-item"><div class="rb-key">log H</div><div class="rb-val" id="r-logh">—</div></div>
+  <div class="rb-item"><div class="rb-key">density D</div><div class="rb-val" id="r-d">—</div></div>
+  <div class="rb-item"><div class="rb-key">transmittance</div><div class="rb-val" id="r-t">—</div></div>
+  <div class="rb-item"><div class="rb-key">electrons</div><div class="rb-val" id="r-e">—</div></div>
+  <div class="rb-item"><div class="rb-key">DN / 16 383</div><div class="rb-val" id="r-dn">—</div></div>
+  <div class="rb-item"><div class="rb-key">zone</div><div class="rb-val" id="r-zone">—</div></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const MAX_DN = 16383;
+const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+const gc = dark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.06)';
+const tc = dark ? '#666' : '#aaa';
+
+const films = {
+  neg: {
+    logH: [-1.5,-1.0,-0.5,0,0.3,0.6,0.9,1.2,1.5,1.8,2.1,2.4,2.7,3.0,3.3],
+    D:    [0.05,0.06,0.09,0.18,0.35,0.60,0.90,1.20,1.50,1.78,2.00,2.15,2.22,2.25,2.26]
+  },
+  slide: {
+    logH: [-1.5,-1.0,-0.5,0,0.3,0.6,0.9,1.2,1.5,1.8,2.1,2.4,2.7,3.0,3.3],
+    D:    [3.00,2.95,2.80,2.40,1.95,1.45,1.00,0.65,0.38,0.20,0.10,0.06,0.04,0.03,0.03]
+  },
+  pan: {
+    logH: [-1.5,-1.0,-0.5,0,0.3,0.6,0.9,1.2,1.5,1.8,2.1,2.4,2.7,3.0,3.3],
+    D:    [0.04,0.05,0.10,0.25,0.50,0.80,1.10,1.38,1.60,1.78,1.90,1.96,1.99,2.00,2.00]
+  }
+};
+
+let curFilm = 'neg';
+let probeT  = 45;
+
+function interp(xs, ys, x) {
+  if (x <= xs[0]) return ys[0];
+  if (x >= xs[xs.length-1]) return ys[ys.length-1];
+  for (let i=0;i<xs.length-1;i++) {
+    if (x>=xs[i]&&x<=xs[i+1]) {
+      const t=(x-xs[i])/(xs[i+1]-xs[i]);
+      return ys[i]+t*(ys[i+1]-ys[i]);
+    }
+  }
+  return ys[ys.length-1];
+}
+
+function getProbe() {
+  const f=films[curFilm];
+  const logHmin=f.logH[0], logHmax=f.logH[f.logH.length-1];
+  const logH=logHmin+(probeT/100)*(logHmax-logHmin);
+  const D=interp(f.logH,f.D,logH);
+  const T=Math.pow(10,-D);
+  const Tmax=Math.pow(10,-Math.min(...f.D));
+  const Tmin=Math.pow(10,-Math.max(...f.D));
+  const electrons=Math.round(Math.max(0,Math.min(1,(T-Tmin)/(Tmax-Tmin)))*MAX_DN);
+  return {logH,D,T,electrons};
+}
+
+function getZone(logH) {
+  const f=films[curFilm];
+  const logHmin=f.logH[0],logHmax=f.logH[f.logH.length-1],span=logHmax-logHmin;
+  if (logH<logHmin+span*0.20) return {label:'toe',color:'#5b8dd9'};
+  if (logH>logHmin+span*0.78) return {label:'shoulder',color:'#c87533'};
+  return {label:'linear',color:'#3a9a5c'};
+}
+
+function buildElectronCurve() {
+  const f=films[curFilm];
+  const Dmax=Math.max(...f.D);
+  const Tmax=Math.pow(10,-Math.min(...f.D));
+  const Tmin=Math.pow(10,-Dmax);
+  const pts=[];
+  for (let i=0;i<=120;i++) {
+    const D=(i/120)*Dmax*1.05;
+    const T=Math.pow(10,-D);
+    const e=Math.max(0,Math.min(MAX_DN,Math.round((T-Tmin)/(Tmax-Tmin)*MAX_DN)));
+    pts.push({x:D,y:e});
+  }
+  return pts;
+}
+
+const ZONE_BG={
+  id:'zonebg',
+  beforeDraw(chart){
+    const {ctx,chartArea,scales}=chart;
+    if(!chartArea)return;
+    const f=films[curFilm];
+    const logHmin=f.logH[0],logHmax=f.logH[f.logH.length-1],span=logHmax-logHmin;
+    const xToe=scales.x.getPixelForValue(logHmin+span*0.20);
+    const xSho=scales.x.getPixelForValue(logHmin+span*0.78);
+    const {left,right,top,bottom}=chartArea;
+    ctx.save();
+    ctx.globalAlpha=dark?0.12:0.15;
+    ctx.fillStyle='#6090d0';ctx.fillRect(left,top,xToe-left,bottom-top);
+    ctx.fillStyle='#50a860';ctx.fillRect(xToe,top,xSho-xToe,bottom-top);
+    ctx.fillStyle='#c87030';ctx.fillRect(xSho,top,right-xSho,bottom-top);
+    ctx.restore();
+  }
+};
+
+const PROBE_HD={
+  id:'probeHD',
+  afterDraw(chart){
+    const {ctx,chartArea,scales}=chart;
+    if(!chartArea)return;
+    const {logH,D}=getProbe();
+    const px=scales.x.getPixelForValue(logH);
+    const py=scales.y.getPixelForValue(D);
+    ctx.save();
+    ctx.strokeStyle=dark?'rgba(255,200,80,.7)':'rgba(150,80,0,.6)';
+    ctx.lineWidth=1;ctx.setLineDash([3,3]);
+    ctx.beginPath();ctx.moveTo(px,chartArea.top);ctx.lineTo(px,chartArea.bottom);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(chartArea.left,py);ctx.lineTo(chartArea.right,py);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle=dark?'#ffcc40':'#a04800';
+    ctx.beginPath();ctx.arc(px,py,5.5,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+  }
+};
+
+const PROBE_WELL={
+  id:'probeWell',
+  afterDraw(chart){
+    const {ctx,chartArea,scales}=chart;
+    if(!chartArea)return;
+    const {D,electrons}=getProbe();
+    const px=scales.x.getPixelForValue(D);
+    const py=scales.y.getPixelForValue(electrons);
+    ctx.save();
+    ctx.strokeStyle=dark?'rgba(255,200,80,.7)':'rgba(150,80,0,.6)';
+    ctx.lineWidth=1;ctx.setLineDash([3,3]);
+    ctx.beginPath();ctx.moveTo(px,chartArea.top);ctx.lineTo(px,chartArea.bottom);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(chartArea.left,py);ctx.lineTo(chartArea.right,py);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle=dark?'#ffcc40':'#a04800';
+    ctx.beginPath();ctx.arc(px,py,5.5,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+  }
+};
+
+let hdChart=null, wellChart=null;
+
+function buildHD(){
+  const f=films[curFilm];
+  const pts=f.logH.map((h,i)=>({x:h,y:f.D[i]}));
+  const ctx=document.getElementById('c-hd');
+  if(hdChart){hdChart.destroy();hdChart=null;}
+  hdChart=new Chart(ctx,{
+    type:'line',
+    data:{datasets:[{data:pts,borderColor:dark?'#bbb':'#333',borderWidth:2,fill:false,pointRadius:0,tension:0.4}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:false,parsing:false,
+      plugins:{legend:{display:false},tooltip:{enabled:false}},
+      scales:{
+        x:{type:'linear',min:f.logH[0],max:f.logH[f.logH.length-1],
+           title:{display:true,text:'log H',font:{size:10},color:tc},
+           grid:{color:gc},ticks:{color:tc,font:{size:10},maxTicksLimit:7}},
+        y:{min:0,max:3.4,
+           title:{display:true,text:'density D',font:{size:10},color:tc},
+           grid:{color:gc},ticks:{color:tc,font:{size:10},stepSize:0.5}}
+      }
+    },
+    plugins:[ZONE_BG,PROBE_HD]
+  });
+}
+
+function buildWell(){
+  const curvePts=buildElectronCurve();
+  const ctx=document.getElementById('c-well');
+  if(wellChart){wellChart.destroy();wellChart=null;}
+  wellChart=new Chart(ctx,{
+    type:'line',
+    data:{datasets:[{
+      data:curvePts,
+      borderColor:dark?'rgba(180,180,180,.3)':'rgba(80,80,80,.22)',
+      borderWidth:1.5,fill:false,pointRadius:0,tension:0.3
+    }]},
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:false,parsing:false,
+      plugins:{legend:{display:false},tooltip:{enabled:false}},
+      scales:{
+        x:{type:'linear',min:0,max:Math.max(...films[curFilm].D)*1.05,
+           title:{display:true,text:'density D',font:{size:10},color:tc},
+           grid:{color:gc},ticks:{color:tc,font:{size:10},maxTicksLimit:7,callback:v=>v.toFixed(1)}},
+        y:{min:0,max:MAX_DN+400,
+           title:{display:true,text:'electrons',font:{size:10},color:tc},
+           grid:{color:gc},
+           ticks:{color:tc,font:{size:10},maxTicksLimit:6,callback:v=>v>=1000?Math.round(v/1000)+'k':v}}
+      }
+    },
+    plugins:[PROBE_WELL]
+  });
+}
+
+function updateReadouts(){
+  const {logH,D,T,electrons}=getProbe();
+  const zone=getZone(logH);
+  document.getElementById('probe-val').textContent='logH '+logH.toFixed(2);
+  document.getElementById('r-logh').textContent=logH.toFixed(2);
+  document.getElementById('r-d').textContent=D.toFixed(3);
+  document.getElementById('r-t').textContent=(T*100).toFixed(2)+'%';
+  document.getElementById('r-e').textContent=electrons.toLocaleString();
+  document.getElementById('r-dn').textContent=electrons.toLocaleString()+' / 16 383';
+  document.getElementById('r-zone').textContent=zone.label;
+  document.getElementById('r-zone').style.color=zone.color;
+  if(hdChart)hdChart.update('none');
+  if(wellChart)wellChart.update('none');
+}
+
+document.getElementById('probe').addEventListener('input',function(){
+  probeT=parseInt(this.value);
+  updateReadouts();
+});
+
+document.querySelectorAll('.fs-btn').forEach(btn=>{
+  btn.addEventListener('click',function(){
+    document.querySelectorAll('.fs-btn').forEach(b=>b.classList.remove('on'));
+    this.classList.add('on');
+    curFilm=this.dataset.film;
+    buildHD();buildWell();updateReadouts();
+  });
+});
+
+buildHD();buildWell();updateReadouts();
+</script>
+</body>
+</html>
