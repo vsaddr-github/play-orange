@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sensor terminology glossary · VLADS TEST TARGET</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400;500&family=Instrument+Serif:ital@0;1&family=Nunito:wght@800&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:      #f5f2ec;
+  --bg2:     #ede9e1;
+  --bg3:     #e6e2d8;
+  --border:  rgba(26,24,20,.12);
+  --text:    #1a1814;
+  --text2:   #4a4640;
+  --text3:   #8a8480;
+  --accent:  #c8401a;
+  --accent-dim: rgba(200,64,26,.15);
+  --mono:    'DM Mono','Menlo','Courier New',monospace;
+  --serif:   'Instrument Serif',Georgia,serif;
+  --sans:    'DM Sans',system-ui,sans-serif;
+  --rounded: 'Arial Rounded MT Bold','Arial Rounded MT','Nunito','Varela Round',sans-serif;
+  --radius:  8px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:     #18181a;
+    --bg2:    #222224;
+    --bg3:    #2a2a2c;
+    --border: rgba(255,255,255,.09);
+    --text:   #e8e7e2;
+    --text2:  #9a9892;
+    --text3:  #5c5b57;
+    --accent-dim: rgba(200,64,26,.22);
+  }
+}
+
+html, body { background: var(--bg); color: var(--text); font-family: var(--sans); font-weight: 300; margin: 0; }
+body { max-width: 860px; margin: 0 auto; padding-bottom: 60px; }
+
+/* ── page header ─────────────────────────────────────────────────────────── */
+.page-header {
+  padding: 32px 28px 26px;
+  border-bottom: 0.5px solid var(--border);
+}
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .14em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+h1 {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.2;
+  margin-bottom: 6px;
+}
+h1 em { font-style: italic; color: var(--text3); }
+.subtitle {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.65;
+  max-width: 580px;
+}
+
+/* ── content ─────────────────────────────────────────────────────────────── */
+.content { padding: 0 28px; }
+
+/* ── section labels ──────────────────────────────────────────────────────── */
+.sec-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: .12em;
+  color: var(--text3);
+  text-transform: uppercase;
+  margin: 32px 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.sec-label::after {
+  content: '';
+  flex: 1;
+  height: 0.5px;
+  background: var(--border);
+}
+
+/* ── term grid ───────────────────────────────────────────────────────────── */
+.term-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.term-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.38fr) minmax(0, 1fr);
+  gap: 0;
+  border-bottom: 0.5px solid var(--border);
+}
+.term-row:last-child { border-bottom: none; }
+.term-row:nth-child(even) .term-key,
+.term-row:nth-child(even) .term-val { background: var(--bg2); }
+
+.term-key {
+  padding: 11px 16px;
+  border-right: 0.5px solid var(--border);
+  background: var(--bg);
+}
+.term-name {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.term-abbr {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--accent);
+  letter-spacing: .04em;
+}
+
+.term-val {
+  padding: 11px 16px;
+  background: var(--bg);
+}
+.term-def {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.6;
+}
+.term-def strong { color: var(--text); font-weight: 500; }
+.term-def code {
+  font-family: var(--mono);
+  font-size: 11px;
+  background: var(--bg3);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--text);
+}
+
+/* ── example sentence block ──────────────────────────────────────────────── */
+.example-block {
+  border: 0.5px solid var(--border);
+  border-left: 2px solid var(--accent);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-top: 28px;
+}
+.example-head {
+  padding: 10px 16px 8px;
+  border-bottom: 0.5px solid var(--border);
+  background: var(--bg2);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: .08em;
+  color: var(--text3);
+  text-transform: uppercase;
+}
+.example-body {
+  padding: 14px 16px;
+  font-size: 14px;
+  color: var(--text2);
+  line-height: 1.75;
+  background: var(--bg);
+}
+.example-body strong { color: var(--text); font-weight: 500; }
+
+/* ── usage note ──────────────────────────────────────────────────────────── */
+.usage-note {
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-top: 10px;
+  background: var(--bg2);
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.65;
+}
+.usage-note strong { color: var(--text); font-weight: 500; }
+.usage-note code {
+  font-family: var(--mono);
+  font-size: 11px;
+  background: var(--bg3);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--text);
+}
+
+/* ── footer ──────────────────────────────────────────────────────────────── */
+.site-footer {
+  margin-top: 48px;
+  border-top: 0.5px solid var(--border);
+  padding: 18px 28px 26px;
+  background: var(--bg2);
+}
+.footer-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.footer-brand {
+  font-family: var(--rounded);
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: .01em;
+  color: var(--text);
+}
+.footer-links { display: flex; gap: 6px; flex-wrap: wrap; }
+.footer-links a {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text2);
+  text-decoration: none;
+  padding: 3px 9px;
+  border: 0.5px solid var(--border);
+  border-radius: 3px;
+  white-space: nowrap;
+  transition: color .12s;
+}
+.footer-links a:hover { color: var(--text); }
+.footer-links a.back { color: var(--accent); border-color: var(--accent-dim); }
+.footer-rule { border: none; border-top: 0.5px solid rgba(26,24,20,.10); margin: 0 0 10px; }
+.footer-bottom { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+.footer-copy { font-family: var(--mono); font-size: 10px; color: var(--text3); letter-spacing: .04em; }
+.footer-tagline { font-family: var(--serif); font-style: italic; font-size: 12px; color: var(--text3); }
+
+/* ── responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 560px) {
+  .term-row { grid-template-columns: 1fr; }
+  .term-key { border-right: none; border-bottom: 0.5px solid var(--border); }
+}
+</style>
+
+<script src="vtt-branding.js" defer></script>
+</head>
+<body>
+
+<div id="vtt-header-mount"></div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     PAGE HEADER
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div class="page-header">
+  <p class="eyebrow">reference &nbsp;·&nbsp; film scanning pipeline</p>
+  <h1>Sensor terminology <em>glossary</em></h1>
+  <p class="subtitle">
+    Standard vocabulary used across the series — from the physical photosite
+    through charge accumulation, analog-to-digital conversion, noise, and
+    saturation. Knowing these terms makes the diagrams easier to read and
+    the numbers easier to interpret.
+  </p>
+</div>
+
+<div class="content">
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       THE PHYSICAL SITE
+       ══════════════════════════════════════════════════════════════════════ -->
+  <div class="sec-label">the physical site</div>
+
+  <div class="term-grid">
+    <div class="term-row">
+      <div class="term-key">
+        <div class="term-name">photosite</div>
+      </div>
+      <div class="term-val">
+        <p class="term-def">The individual light-collecting element on the sensor. <strong>Preferred over "pixel" when discussing capture</strong> — pixel technically describes the output unit displayed on screen, not the collecting element itself.</p>
+      </div>
+    </div>
+    <div class="term-row">
+      <div class="term-key">
+        <div class="term-name">photodiode</div>
+      </div>
+      <div class="term-val">
+        <p class="term-def">The semiconductor element within each photosite that converts incoming photons into electrical charge. The physical mechanism behind all digital capture.</p>
+      </div>
+    </div>
+    <div class="term-row">
+      <div class="term-key">
+        <div class="term-name">pixel</div>
+      </div>
+      <div class="term-val">
+        <p class="term-def">Technically the output unit — a value in the final image. Often used interchangeably with photosite in casual usage, but in the context of these diagrams <strong>photosite is more precise</strong> when referring to the sensor element itself.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       CHARGE ACCUMULATION
+       ══════════════════════════════════════════════════════════════════════ -->
+  <div class="sec-label">charge accumulation</div>
+
+  <div class="term-grid">
+    <div class="term-row">
+      <div class="term-key">
+        <div class="term-name">potential well</div>
+        <div class="term-abbr">/ well</div>
+      </div>
+      <div class="term-val">
+        <p class="term-def">The region within a photosite that holds accumulated electrical charge. <strong>"Well capacity"</strong> refers to how many electrons it can hold before clipping. In these diagrams, the well is shown on a 0–16 383 scale matching a 14-bit sensor.</p>
+      </div>
+    </div>
+    <div class="term-row">
+      <div class="term-key">
+        <div class="term-name">full well capacity</div>
+        <div class="term-abbr">FWC</div>
+      </div>
+      <div class="term-val">
+        <p class="term-def">The maximum number of electrons a photosite can hold before it saturates. Exceeding FWC destroys information — any additional photons produce no additional signal. Typical values range from 10 000 to 100 000 electrons depending on sensor design.</p>
+      </div>
+    </div>
+    <div class="term-row">
+      <div class="term-key">
+        <div class="term-name">electrons</div>
+        <div class="term-abbr">e⁻</div>
+      </div>
+      <div class="term-val">
+        <p class="term-def">The actual charge carriers being counted. <strong>Electron count is the most physically precise way to describe signal level</strong> — it is proportional to the number of photons that arrived, before any digital conversion is applied.</p>
+      </div>
+    </div>
+    <div class="term-row">
+      <div class="term-key">
+        <div class="term-name">charge</div>
+      </div>
+      <div class="term-val">
+        <p class="term-def">Generic term for the accumulated electrons in a well. "Charge level", "charge accumulation", and "charge integration" all refer to the same process of collecting electrons over the exposure period.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       CONVERSION
+       ══════════════════════════════════════════════════════════════════════ -->
+  <div class="sec-label">analog-to-digital conversion</div>
+
+  <div class="term-grid">
+    <div class="term-row">
+      <div class="term-key">
+        <div class="term-name">ADC</div>
+        <div class="term-abbr">analog-to-digital converter</div>
+      </div>
+      <div class="term-val">
+        <p class="term-def">The circuit that measures the charge in each well and converts it to an integer. The ADC is where the analogue electron count becomes a discrete number the computer can store. All information above or below its range is permanently lost at this stage.</p>
+      </div>
+    </div>
+    <div class="term-row">
+      <div class="term-key">
+        <div class="term-name">digital number</div>
+        <div class="term-abbr">DN &nbsp;/&nbsp; ADU</div>
+      </div>
+      <div class="term-val">
+        <p class="term-def">The integer output of the ADC — the raw value stored in a raw file. Also called <strong>ADU (analog-to-digital unit)</strong>. A 14-bit ADC produces DNs in the range 0–16 383. DN is proportional to electron count within the sensor's linear range.</p>
+      </div>
+    </div>
+    <div class="term-row">
+      <div class="term-key">
+        <div class="term-name">raw value</div>
+        <div class="term-abbr">/ raw count</div>
+      </div>
+      <div class="term-val">
+        <p class="term-def">The unprocessed DN straight from the sensor, before any demosaicing, white balance, gamma encoding, or colour correction. <strong>Raw files preserve these values</strong> — every other format has already applied at least one irreversible transform.</p>
+      </div>
+    </div>
+    <div class="term-row">
+      <div class="term-key">
+        <div class="term-name">bit depth</div>
+      </div>
+      <div class="term-val">
+        <p class="term-def">The number of discrete levels the ADC can resolve. A 14-bit ADC produces 2¹⁴ = 16 384 levels (0–16 383). More bits mean finer gradations between steps, reducing quantisation error — particularly important in shadow regions where the signal is small.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       NOISE
+       ══════════════════════════════════════════════════════════════════════ -->
+  <div class="sec-label">noise</div>
+
+  <div class="term-grid">
+    <div class="term-row">
+      <div class="term-key">
+        <div class="term-name">read noise</div>
+      </div>
+      <div class="term-val">
+        <p class="term-def">Electronic noise introduced during the readout process — the act of measuring the well's charge and passing it to the ADC. Measured in electrons RMS. <strong>Read noise sets the absolute noise floor</strong>: signals smaller than read noise cannot be distinguished from it.</p>
+      </div>
+    </div>
+    <div class="term-row">
+      <div class="term-key">
+        <div class="term-name">shot noise</div>
+      </div>
+      <div class="term-val">
+        <p class="term-def">Statistical noise inherent in photon counting — because photons arrive randomly, the actual count varies from the expected value by approximately √N, where N is the electron count. Shot noise is unavoidable and sets the theoretical upper limit on SNR for any given signal level.</p>
+      </div>
+    </div>
+    <div class="term-row">
+      <div class="term-key">
+        <div class="term-name">dark current</div>
+      </div>
+      <div class="term-val">
+        <p class="term-def">Charge that accumulates in a well even without light, due to thermal energy in the semiconductor. Relevant mainly in long exposures. Increases with temperature and exposure duration. Less significant for film scanning than for astrophotography.</p>
+      </div>
+    </div>
+    <div class="term-row">
+      <div class="term-key">
+        <div class="term-name">noise floor</div>
+      </div>
+      <div class="term-val">
+        <p class="term-def">The combined minimum signal level below which information cannot be recovered. Primarily determined by read noise at low signal levels, and by shot noise at higher levels. Signal must exceed the noise floor to carry usable information.</p>
+      </div>
+    </div>
+    <div class="term-row">
+      <div class="term-key">
+        <div class="term-name">SNR</div>
+        <div class="term-abbr">signal-to-noise ratio</div>
+      </div>
+      <div class="term-val">
+        <p class="term-def">The key figure of merit for any captured signal. <strong>Higher electron count = better SNR</strong> — which is why maximising the number of electrons captured before the ADC (exposing to the right, using a bright light source) improves image quality independently of any post-processing.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       SATURATION & CLIPPING
+       ══════════════════════════════════════════════════════════════════════ -->
+  <div class="sec-label">saturation &amp; clipping</div>
+
+  <div class="term-grid">
+    <div class="term-row">
+      <div class="term-key">
+        <div class="term-name">saturation</div>
+      </div>
+      <div class="term-val">
+        <p class="term-def">The condition where a photosite's well is full. Additional photons arriving after saturation produce no additional charge — the well cannot hold more electrons. Saturation is the upper hard limit of the sensor's dynamic range.</p>
+      </div>
+    </div>
+    <div class="term-row">
+      <div class="term-key">
+        <div class="term-name">clipping</div>
+      </div>
+      <div class="term-val">
+        <p class="term-def">Recording a value at or above full well capacity. <strong>Clipped data is permanently lost</strong> — no software process can recover detail from a clipped channel. In film scanning, clipping the raw blue channel by over-exposing to compensate for the orange mask is a common and irreversible error.</p>
+      </div>
+    </div>
+    <div class="term-row">
+      <div class="term-key">
+        <div class="term-name">headroom</div>
+      </div>
+      <div class="term-val">
+        <p class="term-def">The remaining well capacity between the current signal level and full well. Preserving headroom means the sensor has room to record brighter values without clipping. In the series diagrams, headroom is shown as the unused upper portion of the well bar.</p>
+      </div>
+    </div>
+    <div class="term-row">
+      <div class="term-key">
+        <div class="term-name">blooming</div>
+      </div>
+      <div class="term-val">
+        <p class="term-def">Charge spilling from a saturated photosite into its neighbours, corrupting adjacent pixels. Largely eliminated in modern sensors by anti-blooming structures, but historically a significant problem in CCD-based scanners with bright highlights.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       EFFICIENCY
+       ══════════════════════════════════════════════════════════════════════ -->
+  <div class="sec-label">efficiency</div>
+
+  <div class="term-grid">
+    <div class="term-row">
+      <div class="term-key">
+        <div class="term-name">quantum efficiency</div>
+        <div class="term-abbr">QE</div>
+      </div>
+      <div class="term-val">
+        <p class="term-def">The fraction of incident photons that actually produce an electron in the well. A QE of 0.6 means 60 out of every 100 photons are converted — the other 40 are reflected or absorbed without producing charge. <strong>Modern sensors typically achieve 50–80% QE</strong> at their peak wavelength.</p>
+      </div>
+    </div>
+    <div class="term-row">
+      <div class="term-key">
+        <div class="term-name">fill factor</div>
+      </div>
+      <div class="term-val">
+        <p class="term-def">The fraction of the photosite's total area that is actually photosensitive. The remainder is occupied by wiring, transistors, and other circuitry. Microlenses placed over each photosite focus light onto the active area, effectively increasing the fill factor.</p>
+      </div>
+    </div>
+    <div class="term-row">
+      <div class="term-key">
+        <div class="term-name">sensitivity</div>
+      </div>
+      <div class="term-val">
+        <p class="term-def">Loosely used to describe how efficiently a sensor converts light to signal. Formally expressed as QE × fill factor. Often conflated with ISO in camera usage, but ISO is a gain setting applied after capture — it amplifies signal and noise equally and does not change the physical sensitivity of the photosite.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       EXAMPLE SENTENCE
+       ══════════════════════════════════════════════════════════════════════ -->
+  <div class="example-block">
+    <div class="example-head">these terms in context — a typical technical sentence</div>
+    <div class="example-body">
+      "The blue channel <strong>photosites</strong> are collecting fewer <strong>electrons</strong>
+      because the orange mask is attenuating the blue component of the illuminant before it
+      reaches the sensor. With a 14-bit <strong>ADC</strong> and a <strong>full well capacity</strong>
+      of 16 383 electrons, a one-stop reduction in blue photon flux halves the <strong>electron
+      count</strong> and moves the blue signal down into a region where <strong>read noise</strong>
+      becomes significant — reducing <strong>SNR</strong> and compressing the tonal range
+      available in the blue channel before inversion."
+    </div>
+  </div>
+
+  <div class="usage-note">
+    <strong>Note on "pixel" vs "photosite":</strong> in casual conversation and most software interfaces, "pixel" is used for both the sensor element and the output image unit. In these diagrams and notes, <code>photosite</code> refers specifically to the light-collecting element on the sensor, and <code>pixel</code> refers to the output value. The distinction matters when discussing what the sensor captures versus what the image file contains.
+  </div>
+
+</div><!-- /content -->
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     FOOTER
+     ═══════════════════════════════════════════════════════════════════════ -->
+<footer class="site-footer">
+  <div class="footer-top">
+    <div class="footer-brand">VLADS TEST TARGET</div>
+    <div class="footer-links">
+      <a href="film4ever.html" class="back">← series index</a>
+      <a href="https://www.film4ever.info/home" target="_blank" rel="noopener">film4ever.info</a>
+      <a href="https://medium.com/@vladstesttarget" target="_blank" rel="noopener">medium / @vladstesttarget</a>
+      <a href="https://amzn.to/3IhNPO2" target="_blank" rel="noopener">Amazon store</a>
+    </div>
+  </div>
+  <hr class="footer-rule">
+  <div class="footer-bottom">
+    <div class="footer-copy">&copy; <script>document.write(new Date().getFullYear())</script> VLADS TEST TARGET &nbsp;&middot;&nbsp; for educational use</div>
+    <div class="footer-tagline">Shedding light on the dark side of photography</div>
+  </div>
+</footer>
+
+</body>
+</html>
