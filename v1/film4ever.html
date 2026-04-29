@@ -150,6 +150,82 @@ body { max-width: 960px; margin: 0 auto; }
   margin-bottom: 10px;
 }
 
+/* reference card — muted ink background, distinct from graph cards */
+.ref-card {
+  background:    #2e1f14;
+  border:        0.5px solid #3d2a1a;
+  border-radius: var(--border-radius-lg, 10px);
+  overflow:      hidden;
+  text-decoration: none;
+  color:         var(--vtt-paper);
+  display:       flex;
+  flex-direction: column;
+  transition:    background .15s, border-color .15s;
+}
+.ref-card:hover { background: #3d2a1a; border-color: #4f3522; }
+.ref-card:hover .ref-card-arrow { color: var(--vtt-accent); }
+@media (prefers-color-scheme: dark) {
+  .ref-card { background: #2a2a2c; border-color: #3a3a3c; color: var(--vtt-text); }
+  .ref-card:hover { background: #333336; border-color: #444448; }
+}
+.ref-card-head {
+  padding:       14px 16px 10px;
+  border-bottom: 0.5px solid rgba(255,255,255,.12);
+  display:       flex;
+  align-items:   flex-start;
+  justify-content: space-between;
+  gap:           8px;
+}
+.ref-card-id {
+  font-family:    var(--vtt-mono);
+  font-size:      9px;
+  font-weight:    400;
+  letter-spacing: .10em;
+  color:          var(--vtt-accent);
+  text-transform: uppercase;
+  margin-bottom:  4px;
+}
+.ref-card-title {
+  font-family: var(--vtt-serif);
+  font-size:   17px;
+  font-weight: 400;
+  color:       #f5f2ec;
+  line-height: 1.25;
+}
+@media (prefers-color-scheme: dark) {
+  .ref-card-title { color: var(--vtt-text, #e8e7e2); }
+}
+.ref-card-arrow {
+  font-size:   16px;
+  color:       rgba(245,242,236,.45);
+  flex-shrink: 0;
+  padding-top: 2px;
+  font-family: var(--vtt-mono);
+  transition:  color .15s;
+}
+.ref-card-body { padding: 12px 16px 14px; flex: 1; }
+.ref-card-desc {
+  font-size:   13px;
+  color:       rgba(245,242,236,.72);
+  line-height: 1.6;
+  margin-bottom: 10px;
+  font-weight: 300;
+}
+@media (prefers-color-scheme: dark) {
+  .ref-card-desc { color: var(--vtt-ink3, #5c5b57); }
+}
+.ref-card-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+.ref-tag {
+  font-family:    var(--vtt-mono);
+  font-size:      9px;
+  font-weight:    400;
+  letter-spacing: .04em;
+  color:          rgba(245,242,236,.5);
+  padding:        2px 7px;
+  border:         0.5px solid rgba(245,242,236,.18);
+  border-radius:  3px;
+  white-space:    nowrap;
+}
 /* individual graph card */
 .graph-card {
   background: var(--vtt-surface);
@@ -396,19 +472,19 @@ body { max-width: 960px; margin: 0 auto; }
 
   <div class="pillars">
 	<div class="pillar">
-      <div class="pillar-icon">▨</div>
+      <div class="pillar-icon">⬜</div>
       <div class="pillar-head">For photographers</div>
       <div class="pillar-body">Written by a film photographer. Every concept is anchored to something you encounter in your workflow.</div>
     </div>  
     <div class="pillar">
-      <div class="pillar-icon">⬜</div>
+      <div class="pillar-icon">▨</div>
       <div class="pillar-head">Interactive</div>
       <div class="pillar-body">Every diagram has a slider or toggle. Move it and watch the numbers change in real time.</div>
     </div>
     <div class="pillar">
       <div class="pillar-icon">◎</div>
-      <div class="pillar-head">Physics-first</div>
-      <div class="pillar-body">Built on the actual math — transmittance, electron counts, gamma functions — not metaphors.</div>
+      <div class="pillar-head">Color science-first</div>
+      <div class="pillar-body">Built on the actual data — transmittance, electron counts, gamma functions — not metaphors.</div>
     </div>
     
   </div>
@@ -441,7 +517,26 @@ body { max-width: 960px; margin: 0 auto; }
       </div>
     </a>
 
-  
+  	 <!-- glossary reference card -->
+    <a class="ref-card" href="glossary.html">
+      <div class="ref-card-head">
+        <div>
+          <div class="ref-card-id">reference</div>
+          <div class="ref-card-title">Sensor terminology glossary</div>
+        </div>
+        <div class="ref-card-arrow">→</div>
+      </div>
+      <div class="ref-card-body">
+        <p class="ref-card-desc">Photosites, wells, electron counts, full well capacity, ADC, DN, read noise, shot noise, SNR, quantum efficiency — every term used across the series defined in one place.</p>
+        <div class="ref-card-tags">
+          <span class="ref-tag">photosite</span>
+          <span class="ref-tag">full well capacity</span>
+          <span class="ref-tag">read noise</span>
+          <span class="ref-tag">SNR</span>
+          <span class="ref-tag">ADC / DN</span>
+        </div>
+      </div>
+    </a>  
   
 
     <!-- graph1 ================================================ -->
@@ -464,6 +559,10 @@ body { max-width: 960px; margin: 0 auto; }
       </div>
     </a>
 
+	  
+
+	  
+	  
     <!-- graph2 =============================================== -->
     <a class="graph-card" href="graph2.html">
       <div class="card-head">
