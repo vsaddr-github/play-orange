@@ -17,14 +17,14 @@
 
   const BASE_URL  = 'https://vsaddr-github.github.io/play-orange/v1';
   const OG_IMAGE  = BASE_URL + '/vtt-og-image.jpg';   /* 1200×630px — add this file to the repo */
-  const SITE_NAME = "VLADS TEST TARGET — Film Scanning Physics";
-  const AUTHOR    = "Vlad's Test Target";
+  const SITE_NAME = "VLADS TEST TARGET — Film Scanning Academy";
+  const AUTHOR    = "Vlads Test Target";
 
   /* ── per-page metadata ────────────────────────────────────────────────── */
   const pages = {
     'film4ever.html': {
-      title:       'Film Scanning Physics — Interactive Diagrams · VLADS TEST TARGET',
-      description: 'A collection of interactive diagrams explaining the physics of film scanning — chromogenic dye behaviour, linear capture, sensor wells, gamma encoding, and the orange mask. For photographers who scan film.',
+      title:       'Film Scanning Academy — Interactive Diagrams · VLADS TEST TARGET',
+      description: 'A collection of interactive diagrams explaining the science physics of film scanning — chromogenic dye behaviour, linear capture, sensor wells, gamma encoding, and the orange mask. For photographers who scan film.',
       type:        'WebSite',
       keywords:    'film scanning, color negative, orange mask, chromogenic dye, linear capture, camera scanning, analog photography'
     },
@@ -32,7 +32,7 @@
       title:       'H&D Curve → Electron Well Fill · Graph 1 · VLADS TEST TARGET',
       description: 'Interactive Hurter-Driffield characteristic curve showing how scene log exposure maps to film density and into 14-bit sensor electron counts. Why equal density steps produce unequal electron counts — and what this means for scanning.',
       type:        'LearningResource',
-      keywords:    'H&D curve, characteristic curve, film density, electron well, 14-bit sensor, transmittance, toe shoulder film, film scanning physics'
+      keywords:    'H&D curve, characteristic curve, film density, electron well, 14-bit sensor, transmittance, toe shoulder film, film scanning Academy'
     },
     'graph2.html': {
       title:       'Electron Count → Display Brightness · Graph 2 · VLADS TEST TARGET',
@@ -62,13 +62,13 @@
       title:       'Film Absorption × Illuminant Interaction · Graph 5 · VLADS TEST TARGET',
       description: 'What the scanner sensor actually receives — film transmission multiplied by the backing light spectrum. Adjust colour temperature from 3000K tungsten to 15000K blue sky and see how the orange mask dominates regardless of light source.',
       type:        'LearningResource',
-      keywords:    'film transmission, illuminant spectrum, colour temperature, scanning light source, orange mask, LED panel film scanning, blackbody spectrum, film scanning physics'
+      keywords:    'film transmission, illuminant spectrum, colour temperature, scanning light source, orange mask, LED panel film scanning, blackbody spectrum, film scanning science'
     },
     'glossary.html': {
       title:       'Sensor Terminology Glossary · VLADS TEST TARGET',
-      description: 'Standard vocabulary used in digital sensor physics — photosites, electron wells, full well capacity, ADC, digital number, read noise, shot noise, SNR, quantum efficiency. Every term used across the film scanning physics series defined in one place.',
+      description: 'Standard vocabulary used in digital sensor exercises — photosites, electron wells, full well capacity, ADC, digital number, read noise, shot noise, SNR, quantum efficiency. Every term used across the film scanning physics series defined in one place.',
       type:        'DefinedTermSet',
-      keywords:    'photosite, electron well, full well capacity, read noise, shot noise, SNR, quantum efficiency, ADC, digital number, sensor terminology, camera sensor physics'
+      keywords:    'photosite, electron well, full well capacity, read noise, shot noise, SNR, quantum efficiency, ADC, digital number, sensor terminology, camera sensor science'
     }
   };
 
