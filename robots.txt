@@ -1,3 +1,4 @@
 User-agent: *
 Allow: /
-Sitemap: https://vsaddr-github.github.io/play-orange/v1/sitemap.xml
+
+Sitemap: https://vsaddr-github.github.io/play-orange/sitemap.xml
