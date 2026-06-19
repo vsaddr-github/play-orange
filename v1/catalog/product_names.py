@@ -9,7 +9,7 @@ PRODUCT_NAMES = {
     '644637454708': 'Frames per strip 5.',
     '644637310660': ' (645,6x6,6x7)',
     '644637139612': '6x7 6x9',
-    '644637253028': 'Digitize 4x5" ',
+    '644637253028': 'Digitize 4x5 inch ',
     '644637439095': '6x6 MF Slide ',
     '644637420352': '35 mm mounted slide.  (VTT-35MM-SLIDE)',
     '644637008086': 'New 35 mm Focusing and Alignment Aid ',
