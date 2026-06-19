@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VLADS TEST TARGET — Catalog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f5f2ec;
+    --surface: #ede9e1;
+    --ink: #1a1814;
+    --ink-soft: #4a4640;
+    --ink-faint: #8a8480;
+    --rule: #d8d4ca;
+    --accent: #c8401a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    font-weight: 300;
+    line-height: 1.5;
+  }
+  .series-header {
+    border-bottom: 1px solid var(--ink);
+    padding: 20px 40px 16px;
+    background: var(--paper);
+    position: relative;
+  }
+  .series-header::before {
+    content: '';
+    position: absolute; left: 0; right: 0; top: 0; bottom: 1px;
+    background-image: linear-gradient(to right, var(--rule) 1px, transparent 1px);
+    background-size: 80px 100%;
+    opacity: 0.5;
+    pointer-events: none;
+  }
+  .series-name {
+    font-family: 'Arial Rounded MT Bold', 'Arial Black', sans-serif;
+    font-weight: 700; font-size: 13px;
+    letter-spacing: 0.18em; color: var(--ink);
+  }
+  .series-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; color: var(--ink-faint);
+    margin-top: 4px; letter-spacing: 0.05em;
+  }
+  main { max-width: 1100px; margin: 0 auto; padding: 60px 40px 80px; }
+  .eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; letter-spacing: 0.18em;
+    color: var(--ink-faint); text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-family: 'Instrument Serif', serif;
+    font-weight: 400; font-size: 56px; line-height: 1.05;
+    margin: 0 0 12px; color: var(--ink); letter-spacing: -0.01em;
+  }
+  h1 em { font-style: italic; color: var(--accent); }
+  .lede {
+    font-family: 'Instrument Serif', serif;
+    font-size: 20px; line-height: 1.45;
+    color: var(--ink-soft); max-width: 720px;
+    margin: 0 0 12px;
+  }
+  .summary {
+    font-size: 14px; color: var(--ink-faint);
+    margin-bottom: 48px; padding-bottom: 24px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .summary strong { font-weight: 500; color: var(--ink); }
+  .summary code {
+    font-family: 'DM Mono', monospace;
+    background: var(--surface);
+    padding: 1px 5px;
+    border-radius: 2px;
+  }
+
+  .stack { display: flex; flex-direction: column; gap: 24px; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    overflow: hidden;
+    transition: border-color 0.15s ease;
+  }
+  .card:hover { border-color: var(--ink-soft); }
+
+  .photo-slot {
+    background: var(--paper);
+    border-right: 1px solid var(--rule);
+    min-height: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+  .photo-slot .photo-img {
+    max-width: 100%; max-height: 100%;
+    width: auto; height: auto;
+    object-fit: contain; display: block;
+  }
+  /* Gallery caption — appears when a UPC artwork folder exists */
+  .photo-slot.has-gallery {
+    cursor: pointer;
+  }
+  .photo-slot.has-gallery::after {
+    content: 'Click to view artwork  ↗';
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: rgba(26, 24, 20, 0.72);
+    color: #f5f2ec;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: center;
+    padding: 8px 12px;
+    backdrop-filter: blur(2px);
+    transition: background 0.15s ease;
+  }
+  .photo-slot.has-gallery:hover::after {
+    background: rgba(200, 64, 26, 0.85);
+  }
+  .photo-placeholder {
+    flex-direction: column;
+    align-items: center; gap: 8px;
+    padding: 24px; text-align: center;
+  }
+  .ph-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 0.2em;
+    color: var(--ink-faint);
+    border: 1px dashed var(--ink-faint);
+    padding: 6px 12px;
+  }
+  .ph-filename {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; color: var(--ink-faint);
+    word-break: break-all;
+  }
+
+  .card-content {
+    padding: 28px 32px;
+    display: flex; flex-direction: column;
+    gap: 20px;
+  }
+  .card-head { display: flex; flex-direction: column; gap: 12px; }
+  .asin-row {
+    display: flex; justify-content: space-between;
+    align-items: flex-start; gap: 16px;
+  }
+  .asin {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px; color: var(--ink-faint);
+    letter-spacing: 0.05em;
+    padding-top: 8px;
+  }
+  .prices { display: flex; gap: 24px; align-items: flex-start; }
+  .price-block { display: flex; flex-direction: column; align-items: flex-end; }
+  .price-val {
+    font-family: 'Instrument Serif', serif;
+    font-size: 28px; line-height: 1;
+    color: var(--accent); font-weight: 400;
+  }
+  .price-lbl {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; color: var(--ink-faint);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin-top: 6px;
+  }
+  .title {
+    font-family: 'Instrument Serif', serif;
+    font-weight: 400; font-size: 22px; line-height: 1.25;
+    color: var(--ink); margin: 0;
+  }
+  .amzn-link {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; color: var(--accent);
+    text-decoration: none; letter-spacing: 0.04em;
+    text-transform: uppercase;
+    align-self: flex-start;
+  }
+  .amzn-link:hover { text-decoration: underline; }
+
+  .meta {
+    margin: 0;
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 8px 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+  }
+  .meta dt {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; color: var(--ink-faint);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    align-self: center;
+  }
+  .meta dd {
+    margin: 0; color: var(--ink-soft);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px; word-break: break-word;
+  }
+
+  .note {
+    border-left: 3px solid var(--accent);
+    padding: 14px 18px;
+    background: rgba(200, 64, 26, 0.04);
+    min-height: 72px;
+  }
+  .note-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+  .note-body {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 16px;
+    line-height: 1.45;
+    color: var(--ink-soft);
+    min-height: 24px;
+  }
+  .note-body:empty::before {
+    content: '— add note —';
+    font-family: 'DM Mono', monospace;
+    font-style: normal;
+    font-size: 11px;
+    color: var(--ink-faint);
+    letter-spacing: 0.05em;
+  }
+
+  footer.page-foot {
+    border-top: 1px solid var(--rule);
+    margin-top: 60px; padding-top: 24px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; color: var(--ink-faint);
+    letter-spacing: 0.04em;
+  }
+  @media (max-width: 720px) {
+    main { padding: 36px 20px 60px; }
+    h1 { font-size: 36px; }
+    .card { grid-template-columns: 1fr; }
+    .photo-slot {
+      border-right: none;
+      border-bottom: 1px solid var(--rule);
+      min-height: 220px;
+    }
+    .card-content { padding: 24px 20px; }
+    .asin-row { flex-direction: column; gap: 12px; }
+    .prices { width: 100%; justify-content: flex-start; }
+    .price-block { align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+<!--
+  galleries.js is auto-generated by generate_galleries.py.
+  Run that script after adding artwork to any UPC-named folder.
+  If the file doesn't exist yet the catalog works fine — gallery
+  links simply won't appear until it is generated.
+-->
+<script src="galleries.js"></script>
+
+<script>
+  // Currency symbol shown before every price — change once, applies everywhere.
+  const CURRENCY = "€";// "$"; 
+
+  function formatPrice(val) {
+    if (val === null || val === undefined) return "—";
+    return CURRENCY + val.toFixed(2);
+  }
+  const PRICES = {
+  "B0BYLYRTZJ": 19.78,  // Scan Film Sharp with Vlads Focus Checker. 3 frama
+  "B0BYV4ZR484": 23.65, // Scan Film Sharp with Vlads Focus Checker. 4 frama
+  "B0BYV4ZR48": 27.50, // Scan Film Sharp with Vlads Focus Checker. 5 framas
+  "B0GLDN8DJT": 27.50, // 645+6x6+6x7 for Film Scanning with DSLR/
+  //"B0DMVDM5B4": 27.50, // 6x7 and 6x9 Vlads Test Target and Focusing
+  "B0BZ6FMYJT": 27.50, // 6x7 and 6x9  Type 120 Vlads Test Target and Focusing 
+  "B0BZ5ZJCPS": 27.40, // 4x5 Slides with Focus Checker 
+  "B0CWDMLS59": 13.20, // 6x6 Focus Checker MF Slide by Vlads Test 
+  "B0C212M826": 13.93, // 35 mm Slide for Focusing and Camera Scan
+  "B0C1WR6VPR": 13.60, // New 35 mm Focusing and Alignment Aid  
+  "B0C2GXR6ZP": 52.00, // 35 mm Hi-Res (5 Frames) and Type 120 Vlads  
+  "B0GTN8YBV5": 52.00, // 35 mm and 645+6x6+6x7 Vlads Focus Checker
+  "B0GLFCR4WC": 27.50, // 645 x 3 Focus Checker 
+  "B0BZ5ZJCPS-4": 99.00, // 4x5 - 4 uncut 
+  "VTTBACKGR01": 25.00, // vtt background
+  //"B0FTKPP2S9": 23.52, // 6x6 Focus Test Negative on Type 120 Film
+  //"B0GNPDMD35": 25.90, // Scan Film Sharp with Vlads Focus Checker P
+  "B0DNDWB66G": null, // (not in active listings)
+  "B0GNRF4MZ4": null, // (not in active listings)
+  };
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('[data-price-for]').forEach(function (el) {
+      const asin = el.getAttribute('data-price-for');
+      const val = PRICES[asin];
+      //el.textContent = (val === null || val === undefined) ? '—' : ('€' + val.toFixed(2));
+	  el.textContent = formatPrice(val);
+    });
+
+    // Gallery wiring — reads UPC from each card's own meta table,
+    // no data-upc attribute needed on the card element.
+    function getCardUPC(card) {
+      const dts = card.querySelectorAll('.meta dt');
+      for (let i = 0; i < dts.length; i++) {
+        if (dts[i].textContent.trim() === 'UPC') {
+          const dd = dts[i].nextElementSibling;
+          return dd ? dd.textContent.trim() : null;
+        }
+      }
+      return null;
+    }
+
+    const activeGalleries = (typeof GALLERIES !== 'undefined') ? GALLERIES : new Set();
+    document.querySelectorAll('.card').forEach(function (card) {
+      const upc = getCardUPC(card);
+      if (!upc || !activeGalleries.has(upc)) return;
+      const slot = card.querySelector('.photo-slot');
+      if (!slot) return;
+      slot.classList.add('has-gallery');
+      slot.addEventListener('click', function () {
+        window.open(upc + '/gallery.html', '_blank');
+      });
+    });
+  });
+</script>
+  <div class="series-header">
+    <div class="series-name">VLADS TEST TARGET</div>
+    <div class="series-sub">Amazon Catalog · Snapshot 2026-06-10</div>
+  </div>
+  <main>
+    <div class="eyebrow">Wholesale Catalog</div>
+    <h1>Vlads Test Target <em>catalog</em>, on one page.</h1>
+    <p class="lede">Current offers as of June, 2026</p>
+    <p class="summary"><strong></strong> https://vsaddr-github.github.io/play-orange/v1/catalog/VTT_Wholesale_Catalog_EU.html </p>
+    <div class="stack">
+      
+      <!-- file:///D:/GitHub/play-orange/v1/catalog/VTT_Wholesale_Catalog.html -->
+
+    <article class="card">
+      <div class="photo-slot">
+        <img class="photo-img" src="644637132545.jpg" alt="Product photo for B0BYLYRTZJ"
+             onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src=this.src.replace(/\.jpg$/i,'.png');}else{this.style.display='none';this.nextElementSibling.style.display='flex';}">
+        <div class="photo-placeholder" style="display:none;">
+          <span class="ph-label">PHOTO</span>
+          <span class="ph-filename">644637132545.jpg / .png</span>
+        </div>
+      </div>
+      <div class="card-content">
+        <header class="card-head">
+          <div class="asin-row">
+            <span class="asin">B0BYLYRTZJ</span>
+            <div class="prices">
+              <div class="price-block wholesale">
+                <span class="price-val" data-price-for="B0BYLYRTZJ">—</span>
+                <span class="price-lbl">Wholesale</span>
+              </div>
+            </div>
+          </div>
+          <h2 class="title">Scan Film Sharp with Vlads Focus Checker. 35 mm High-Resolution Calibration Target Chart for Camera Scanning. Explore the Full Potential of Your Lens – Sharpness and Resolution. Frames per Strip 3.</h2>
+          <a class="amzn-link" href="https://www.amazon.com/dp/B0BYLYRTZJ" target="_blank" rel="noopener">View on Amazon ↗</a>
+        </header>
+        <dl class="meta">
+          <dt>SKU</dt><dd>35mm-3f</dd>
+          <dt>FNSKU</dt><dd>X003S5POFV</dd>
+          <dt>UPC</dt><dd>644637132545</dd>
+        </dl>
+        <div class="note">
+          <div class="note-label">Vlad&rsquo;s Note</div>
+          <div class="note-body"> A three-frame strip works well with vintage slide duplicators like the Nikon or Canon models, and it's perfectly suited to the VALOI 365 film holder. However, three-frame strips can be awkward to handle in the VALOI Easy 120, Negative Supply, and Digitaliza+ holders. This target has resolution around 100 lp/mm.
+            <!-- Add your note to the seller here -->
+          </div>
+        </div>
+      </div>
+    </article>
+
+  
+	
+	<article class="card">
+      <div class="photo-slot">
+        <img class="photo-img" src="644637454708-4.jpg" alt="Product photo for B0BYV4ZR48-4"
+             onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src=this.src.replace(/\.jpg$/i,'.png');}else{this.style.display='none';this.nextElementSibling.style.display='flex';}">
+        <div class="photo-placeholder" style="display:none;">
+          <span class="ph-label">PHOTO</span>
+          <span class="ph-filename">644637454708-4.jpg / .png</span>
+        </div>
+      </div>
+      <div class="card-content">
+        <header class="card-head">
+          <div class="asin-row">
+            <span class="asin">B0BYV4ZR484</span>
+            <div class="prices">
+              <div class="price-block wholesale">
+                <span class="price-val" data-price-for="B0BYV4ZR484">-</span>
+                <span class="price-lbl">Wholesale</span>
+              </div>
+            </div>
+          </div>
+          <h2 class="title">Scan Film Sharp with Vlads Focus Checker. 35 mm High-resolution Calibration Target Chart for Camera Scanning. Explore the Full Potential of Your Lens – Sharpness and Resolution. Frames per strip 4.</h2>
+          <a class="amzn-link" href="https://www.amazon.com/dp/B0BYV4ZR48" target="_blank" rel="noopener">View on Amazon ↗</a>
+        </header>
+        <dl class="meta">
+          <dt>SKU</dt><dd>G6-SSDG-0S8T-4</dd>
+          <dt>FNSKU</dt><dd>X003S5PYTH-4</dd>
+          <dt>UPC</dt><dd>644637454708-4</dd>
+        </dl>
+        <div class="note">
+          <div class="note-label">Vlad&rsquo;s Note</div>
+          <div class="note-body"> A four-frame strip will work with holders - including the VALOI Easy 120 - with medium length film channel. The idea is that when fine-tuning your rig, you want to work with a frame that isn't at the end of the strip, where curling tends to occur. This target has resolution around 100 lp/mm.
+            <!-- Add your note to the seller here -->
+          </div>
+        </div>
+      </div>
+    </article>
+	
+	
+
+    <article class="card">
+      <div class="photo-slot">
+        <img class="photo-img" src="644637454708.jpg" alt="Product photo for B0BYV4ZR48"
+             onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src=this.src.replace(/\.jpg$/i,'.png');}else{this.style.display='none';this.nextElementSibling.style.display='flex';}">
+        <div class="photo-placeholder" style="display:none;">
+          <span class="ph-label">PHOTO</span>
+          <span class="ph-filename">644637454708.jpg / .png</span>
+        </div>
+      </div>
+      <div class="card-content">
+        <header class="card-head">
+          <div class="asin-row">
+            <span class="asin">B0BYV4ZR48</span>
+            <div class="prices">
+              <div class="price-block wholesale">
+                <span class="price-val" data-price-for="B0BYV4ZR48">-</span>
+                <span class="price-lbl">Wholesale</span>
+              </div>
+            </div>
+          </div>
+          <h2 class="title">Scan Film Sharp with Vlads Focus Checker. 35 mm High-resolution Calibration Target Chart for Camera Scanning. Explore the Full Potential of Your Lens – Sharpness and Resolution. Frames per strip 5.</h2>
+          <a class="amzn-link" href="https://www.amazon.com/dp/B0BYV4ZR48" target="_blank" rel="noopener">View on Amazon ↗</a>
+        </header>
+        <dl class="meta">
+          <dt>SKU</dt><dd>G6-SSDG-0S8T</dd>
+          <dt>FNSKU</dt><dd>X003S5PYTH</dd>
+          <dt>UPC</dt><dd>644637454708</dd>
+        </dl>
+        <div class="note">
+          <div class="note-label">Vlad&rsquo;s Note</div>
+          <div class="note-body"> A five-frame strip is ideal for almost any film holder, including the VALOI Easy 120, Negative Supply, and Digitaliza+. The idea is that when fine-tuning your rig, you want to work with a frame that isn't at the end of the strip, where curling tends to occur. This target has resolution around 100 lp/mm.
+            <!-- Add your note to the seller here -->
+          </div>
+        </div>
+      </div>
+    </article>
+	
+	<article class="card">
+      <div class="photo-slot">
+        <img class="photo-img" src="644637310660.jpg" alt="Product photo for B0GLDN8DJT"
+             onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src=this.src.replace(/\.jpg$/i,'.png');}else{this.style.display='none';this.nextElementSibling.style.display='flex';}">
+        <div class="photo-placeholder" style="display:none;">
+          <span class="ph-label">PHOTO</span>
+          <span class="ph-filename">644637310660.jpg / .png</span>
+        </div>
+      </div>
+      <div class="card-content">
+        <header class="card-head">
+          <div class="asin-row">
+            <span class="asin">B0GLDN8DJT</span>
+            <div class="prices">
+              <div class="price-block wholesale">
+                <span class="price-val" data-price-for="B0GLDN8DJT">-</span>
+                <span class="price-lbl">Wholesale</span>
+              </div>
+            </div>
+          </div>
+          <h2 class="title">Focus Checker for Film Scanning with DSLR/mirrorless. Digitize Slides &amp; Negatives. Fully Utilize Your Lens Sharpness and Fidelity. (645,6x6,6x7)</h2>
+          <a class="amzn-link" href="https://www.amazon.com/dp/B0GLDN8DJT" target="_blank" rel="noopener">View on Amazon ↗</a>
+        </header>
+        <dl class="meta">
+          <dt>SKU</dt><dd>1CG3-35YE-65461667</dd>
+          <dt>FNSKU</dt><dd>X0051MVDLN</dd>
+          <dt>UPC</dt><dd>644637310660</dd>
+        </dl>
+        <div class="note">
+          <div class="note-label">Vlad&rsquo;s Note</div>
+          <div class="note-body">
+            <!-- Add your note to the seller here -->
+          </div>
+        </div>
+      </div>
+    </article>
+
+
+	
+	<article class="card">
+      <div class="photo-slot">
+        <img class="photo-img" src="644637139612.jpg" alt="Product photo for B0BZ6FMYJT"
+             onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src=this.src.replace(/\.jpg$/i,'.png');}else{this.style.display='none';this.nextElementSibling.style.display='flex';}">
+        <div class="photo-placeholder" style="display:none;">
+          <span class="ph-label">PHOTO</span>
+          <span class="ph-filename">644637139612.jpg / .png</span>
+        </div>
+      </div>
+      <div class="card-content">
+        <header class="card-head">
+          <div class="asin-row">
+            <span class="asin">B0BZ6FMYJT</span>
+            <div class="prices">
+              <div class="price-block wholesale">
+                <span class="price-val" data-price-for="B0BZ6FMYJT">-</span>
+                <span class="price-lbl">Wholesale</span>
+              </div>
+            </div>
+          </div>
+          <h2 class="title">Type 120 Vlads Test Target and Focusing Aid for Film Scanning with DSLR/mirrorless. Digitize Slides &amp; Negatives. Fully Utilize Your Lens Sharpness and Fidelity.</h2>
+          <a class="amzn-link" href="https://www.amazon.com/dp/B0BZ6FMYJT" target="_blank" rel="noopener">View on Amazon ↗</a>
+        </header>
+        <dl class="meta">
+          <dt>SKU</dt><dd>T120-6x7-6x9 · 48-YWP2-ZFVH</dd>
+          <dt>FNSKU</dt><dd>X0051P2R8N · X003S5SD3B</dd>
+          <dt>UPC</dt><dd>644637139612</dd>
+        </dl>
+        <div class="note">
+          <div class="note-label">Vlad&rsquo;s Note</div>
+          <div class="note-body">
+            <!-- Add your note to the seller here -->
+          </div>
+        </div>
+      </div>
+    </article>
+
+  <article class="card">
+      <div class="photo-slot">
+        <img class="photo-img" src="644637253028.jpg" alt="Product photo for B0BZ5ZJCPS"
+             onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src=this.src.replace(/\.jpg$/i,'.png');}else{this.style.display='none';this.nextElementSibling.style.display='flex';}">
+        <div class="photo-placeholder" style="display:none;">
+          <span class="ph-label">PHOTO</span>
+          <span class="ph-filename">644637253028.jpg / .png</span>
+        </div>
+      </div>
+      <div class="card-content">
+        <header class="card-head">
+          <div class="asin-row">
+            <span class="asin">B0BZ5ZJCPS</span>
+            <div class="prices">
+              <div class="price-block wholesale">
+                <span class="price-val" data-price-for="B0BZ5ZJCPS">-</span>
+                <span class="price-lbl">Wholesale</span>
+              </div>
+            </div>
+          </div>
+          <h2 class="title">Digitize 4x5" (10 x 12.5 cm) Slides or Negatives with Focus Checker by Vlads Test Target. Excellent Aid for Focusing DSLR/mirrorless Cameras.</h2>
+          <a class="amzn-link" href="https://www.amazon.com/dp/B0BZ5ZJCPS" target="_blank" rel="noopener">View on Amazon ↗</a>
+        </header>
+        <dl class="meta">
+          <dt>SKU</dt><dd>NI-N1YI-XSHD</dd>
+          <dt>FNSKU</dt><dd>X003S5ORYF</dd>
+          <dt>UPC</dt><dd>644637253028</dd>
+        </dl>
+        <div class="note">
+          <div class="note-label">Vlad&rsquo;s Note</div>
+          <div class="note-body">
+		    This target has maximum resolution ~ 43 lp/mm. 
+            <!-- Add your note to the seller here -->
+          </div>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="photo-slot">
+        <img class="photo-img" src="644637439095.jpg" alt="Product photo for B0CWDMLS59"
+             onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src=this.src.replace(/\.jpg$/i,'.png');}else{this.style.display='none';this.nextElementSibling.style.display='flex';}">
+        <div class="photo-placeholder" style="display:none;">
+          <span class="ph-label">PHOTO</span>
+          <span class="ph-filename">644637439095.jpg / .png</span>
+        </div>
+      </div>
+      <div class="card-content">
+        <header class="card-head">
+          <div class="asin-row">
+            <span class="asin">B0CWDMLS59</span>
+            <div class="prices">
+              <div class="price-block wholesale">
+                <span class="price-val" data-price-for="B0CWDMLS59">-</span>
+                <span class="price-lbl">Wholesale</span>
+              </div>
+            </div>
+          </div>
+          <h2 class="title">6x6 Focus Checker MF Slide by Vlads Test Target in 70x70 mm GEPE Mount for Camera Scanning Tune-up. Digitize Your Priceless Slides and Negatives with The Highest Sharpness and Fidelity.</h2>
+          <a class="amzn-link" href="https://www.amazon.com/dp/B0CWDMLS59" target="_blank" rel="noopener">View on Amazon ↗</a>
+        </header>
+        <dl class="meta">
+          <dt>SKU</dt><dd>VA-56O6-0BBS</dd>
+          <dt>FNSKU</dt><dd>X00458PG5D</dd>
+          <dt>UPC</dt><dd>644637439095</dd>
+        </dl>
+        <div class="note">
+          <div class="note-label">Vlad&rsquo;s Note</div>
+          <div class="note-body">
+            <!-- Add your note to the seller here -->
+          </div>
+        </div>
+      </div>
+    </article>
+
+    
+
+
+
+    <article class="card">
+      <div class="photo-slot">
+        <img class="photo-img" src="644637420352.jpg" alt="Product photo for B0C212M826"
+             onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src=this.src.replace(/\.jpg$/i,'.png');}else{this.style.display='none';this.nextElementSibling.style.display='flex';}">
+        <div class="photo-placeholder" style="display:none;">
+          <span class="ph-label">PHOTO</span>
+          <span class="ph-filename">644637420352.jpg / .png</span>
+        </div>
+      </div>
+      <div class="card-content">
+        <header class="card-head">
+          <div class="asin-row">
+            <span class="asin">B0C212M826</span>
+            <div class="prices">
+              <div class="price-block wholesale">
+                <span class="price-val" data-price-for="B0C212M826">-</span>
+                <span class="price-lbl">Wholesale</span>
+              </div>
+            </div>
+          </div>
+          <h2 class="title">35 mm mounted slide. Test Negative for Focusing and Camera Scanning with DSLR/mirrorless. Digitize Your Priceless Slides &amp; Negatives. Explore and Utilize Your Lens Sharpness and Fidelity. (VTT-35MM-SLIDE)</h2>
+          <a class="amzn-link" href="https://www.amazon.com/dp/B0C212M826" target="_blank" rel="noopener">View on Amazon ↗</a>
+        </header>
+        <dl class="meta">
+          <dt>SKU</dt><dd>NI-R4AG-R0VG</dd>
+          <dt>FNSKU</dt><dd>X003S8W87F</dd>
+          <dt>UPC</dt><dd>644637420352</dd>
+        </dl>
+        <div class="note">
+          <div class="note-label">Vlad&rsquo;s Note</div>
+          <div class="note-body">
+		    Single frame is mounted in the thin (2 mm) glassless mount GEPE 7011 with aluminium mask.
+            <!-- Add your note to the seller here -->
+          </div>
+        </div>
+      </div>
+    </article>
+
+
+    <article class="card">
+      <div class="photo-slot">
+        <img class="photo-img" src="644637008086.jpg" alt="Product photo for B0C1WR6VPR"
+             onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src=this.src.replace(/\.jpg$/i,'.png');}else{this.style.display='none';this.nextElementSibling.style.display='flex';}">
+        <div class="photo-placeholder" style="display:none;">
+          <span class="ph-label">PHOTO</span>
+          <span class="ph-filename">644637008086.jpg / .png</span>
+        </div>
+      </div>
+      <div class="card-content">
+        <header class="card-head">
+          <div class="asin-row">
+            <span class="asin">B0C1WR6VPR</span>
+            <div class="prices">
+              <div class="price-block wholesale">
+                <span class="price-val" data-price-for="B0C1WR6VPR">-</span>
+                <span class="price-lbl">Wholesale</span>
+              </div>
+            </div>
+          </div>
+          <h2 class="title">New 35 mm Focusing and Alignment Aid for DSLR/mirrorless Film Scanning. Digitize Your Priceless Color &amp; B/W Negatives &amp; Slides w/The Highest Sharpness and Fidelity.</h2>
+          <a class="amzn-link" href="https://www.amazon.com/dp/B0C1WR6VPR" target="_blank" rel="noopener">View on Amazon ↗</a>
+        </header>
+        <dl class="meta">
+          <dt>SKU</dt><dd>35mm-ASTR</dd>
+          <dt>FNSKU</dt><dd>X003S7CGL9</dd>
+          <dt>UPC</dt><dd>644637008086</dd>
+        </dl>
+        <div class="note">
+          <div class="note-label">Vlad&rsquo;s Note</div>
+          <div class="note-body">
+            <!-- Add your note to the seller here -->
+          </div>
+        </div>
+      </div>
+    </article>
+
+
+
+
+    <article class="card">
+      <div class="photo-slot">
+        <img class="photo-img" src="644637094553.jpg" alt="Product photo for B0C2GXR6ZP"
+             onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src=this.src.replace(/\.jpg$/i,'.png');}else{this.style.display='none';this.nextElementSibling.style.display='flex';}">
+        <div class="photo-placeholder" style="display:none;">
+          <span class="ph-label">PHOTO</span>
+          <span class="ph-filename">644637094553.jpg / .png</span>
+        </div>
+      </div>
+      <div class="card-content">
+        <header class="card-head">
+          <div class="asin-row">
+            <span class="asin">B0C2GXR6ZP</span>
+            <div class="prices">
+              <div class="price-block wholesale">
+                <span class="price-val" data-price-for="B0C2GXR6ZP">-</span>
+                <span class="price-lbl">Wholesale</span>
+              </div>
+            </div>
+          </div>
+          <h2 class="title">35 mm Hi-Res (5 Frames) and Type 120 Vlads Focus Checker High-Resolution Calibration Target Chart Combo for Digitizing, Camera Scanning. Fully Utilize Your Lens Sharpness and Resolution.</h2>
+          <a class="amzn-link" href="https://www.amazon.com/dp/B0C2GXR6ZP" target="_blank" rel="noopener">View on Amazon ↗</a>
+        </header>
+        <dl class="meta">
+          <dt>SKU</dt><dd>4O-ZEUT-DJ0L</dd>
+          <dt>FNSKU</dt><dd>X003SF1M61</dd>
+          <dt>UPC</dt><dd>644637094553</dd>
+        </dl>
+        <div class="note">
+          <div class="note-label">Vlad&rsquo;s Note</div>
+          <div class="note-body">This item is the combo package of the two most popular test targets: a 35mm five-frame strip and a Type 120 strip with 6x7 and 6x9 frames. The combo offers significant cost savings compared to the individual items.
+            <!-- Add your note to the seller here -->
+          </div>
+        </div>
+      </div>
+    </article>
+
+   
+
+    <article class="card">
+      <div class="photo-slot">
+        <img class="photo-img" src="644637160258.jpg" alt="Product photo for B0GTN8YBV5"
+             onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src=this.src.replace(/\.jpg$/i,'.png');}else{this.style.display='none';this.nextElementSibling.style.display='flex';}">
+        <div class="photo-placeholder" style="display:none;">
+          <span class="ph-label">PHOTO</span>
+          <span class="ph-filename">644637160258.jpg / .png</span>
+        </div>
+      </div>
+      <div class="card-content">
+        <header class="card-head">
+          <div class="asin-row">
+            <span class="asin">B0GTN8YBV5</span>
+            <div class="prices">
+              <div class="price-block wholesale">
+                <span class="price-val" data-price-for="B0GTN8YBV5">-</span>
+                <span class="price-lbl">Wholesale</span>
+              </div>
+            </div>
+          </div>
+          <h2 class="title">35 mm and 645+6x6+6x7 Vlads Focus Checker High-Resolution Calibration Target Charts for Camera Scanning. Fully Utilize Your Lens Sharpness and Resolution. Two Charts Combo (35+645+66+67)</h2>
+          <a class="amzn-link" href="https://www.amazon.com/dp/B0GTN8YBV5" target="_blank" rel="noopener">View on Amazon ↗</a>
+        </header>
+        <dl class="meta">
+          <dt>SKU</dt><dd>4O-ZEUT-DJ0L-2</dd>
+          <dt>FNSKU</dt><dd>X0051OR379</dd>
+          <dt>UPC</dt><dd>644637160258</dd>
+        </dl>
+        <div class="note">
+          <div class="note-label">Vlad&rsquo;s Note</div>
+          <div class="note-body">This item is the combo package of the two most popular test targets: a 35mm five-frame strip and a Type 120 strip with 6x4.5, 6x6, and 6x7 frames. The combo offers significant cost savings compared to the individual items.
+            <!-- Add your note to the seller here -->
+          </div>
+        </div>
+      </div>
+    </article>
+
+   
+    <article class="card">
+      <div class="photo-slot">
+        <img class="photo-img" src="644637292232.jpg" alt="Product photo for B0GLFCR4WC"
+             onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src=this.src.replace(/\.jpg$/i,'.png');}else{this.style.display='none';this.nextElementSibling.style.display='flex';}">
+        <div class="photo-placeholder" style="display:none;">
+          <span class="ph-label">PHOTO</span>
+          <span class="ph-filename">644637292232.jpg / .png</span>
+        </div>
+      </div>
+      <div class="card-content">
+        <header class="card-head">
+          <div class="asin-row">
+            <span class="asin">B0GLFCR4WC</span>
+            <div class="prices">
+              <div class="price-block wholesale">
+                <span class="price-val" data-price-for="B0GLFCR4WC">-</span>
+                <span class="price-lbl">Wholesale</span>
+              </div>
+            </div>
+          </div>
+          <h2 class="title">Medium Format 645 (6x4.5) Focus Checker for Film Scanning with DSLR/mirrorless. Three Frames on MF Film. Digitize Slides &amp; Negatives. Fully Utilize Your Lens Sharpness and Fidelity. Model 645-3</h2>
+          <a class="amzn-link" href="https://www.amazon.com/dp/B0GLFCR4WC" target="_blank" rel="noopener">View on Amazon ↗</a>
+        </header>
+        <dl class="meta">
+          <dt>SKU</dt><dd>1CG3-35YE-645-31</dd>
+          <dt>FNSKU</dt><dd>X0051MSE5L</dd>
+          <dt>UPC</dt><dd>644637292232</dd>
+        </dl>
+        <div class="note">
+          <div class="note-label">Vlad&rsquo;s Note</div>
+          <div class="note-body">
+            <!-- Add your note to the seller here -->
+          </div>
+        </div>
+      </div>
+    </article>
+
+       <article class="card">
+      <div class="photo-slot">
+        <img class="photo-img" src="64437300001.jpg" alt="Product photo for B0BZ5ZJCPS-4"
+             onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src=this.src.replace(/\.jpg$/i,'.png');}else{this.style.display='none';this.nextElementSibling.style.display='flex';}">
+        <div class="photo-placeholder" style="display:none;">
+          <span class="ph-label">PHOTO</span>
+          <span class="ph-filename">64437300001.jpg / .png</span>
+        </div>
+      </div>
+      <div class="card-content">
+        <header class="card-head">
+          <div class="asin-row">
+            <span class="asin">B0BZ5ZJCPS-4</span>
+            <div class="prices">
+              <div class="price-block wholesale">
+                <span class="price-val" data-price-for="B0BZ5ZJCPS-4">-</span>
+                <span class="price-lbl">Wholesale</span>
+              </div>
+            </div>
+          </div>
+          <h2 class="title">8x10 Transparent Test Target to help scan large format negatives from view cameras. </h2>
+          <a class="amzn-link" href="https://www.amazon.com/dp/B0BZ5ZJCPS-4" target="_blank" rel="noopener">View on Amazon ↗</a>
+        </header>
+        <dl class="meta">
+          <dt>SKU</dt><dd>n/a</dd>
+          <dt>FNSKU</dt><dd>n/a</dd>
+          <dt>UPC</dt><dd>64437300001</dd>
+        </dl>
+        <div class="note">
+          <div class="note-label">Vlad&rsquo;s Note</div>
+          <div class="note-body">
+            <!-- Add your note to the seller here -->
+			This test target is one uncut sheet of film compromized of four 4x5" targets (see B0BZ5ZJCPS above). If you have 8x10 inch ( 20x25 cm) negatives which you want to digitize use this large target to test/calibrate your scanning setup. Fine raster helps ensure uniform illumination from background.  
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="photo-slot">
+        <img class="photo-img" src="64437300002.jpg" alt="Product photo for B0BZ5ZJCPS-4"
+             onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src=this.src.replace(/\.jpg$/i,'.png');}else{this.style.display='none';this.nextElementSibling.style.display='flex';}">
+        <div class="photo-placeholder" style="display:none;">
+          <span class="ph-label">PHOTO</span>
+          <span class="ph-filename">64437300002.jpg / .png</span>
+        </div>
+      </div>
+      <div class="card-content">
+        <header class="card-head">
+          <div class="asin-row">
+            <span class="asin">VTTBACKGR01</span>
+            <div class="prices">
+              <div class="price-block wholesale">
+                <span class="price-val" data-price-for="VTTBACKGR01">-</span>
+                <span class="price-lbl">Wholesale</span>
+              </div>
+            </div>
+          </div>
+          <h2 class="title">Printable (PDF) background for flat originals. </h2>
+		  <!--
+          <a class="amzn-link" href="https://www.amazon.com/dp/VTTBACKGR01" target="_blank" rel="noopener">View on Amazon ↗</a>
+		  -->
+        </header>
+        <dl class="meta">
+          <dt>SKU</dt><dd>n/a</dd>
+          <dt>FNSKU</dt><dd>n/a</dd>
+          <dt>UPC</dt><dd>64437300002</dd>
+        </dl>
+        <div class="note">
+          <div class="note-label">Vlad&rsquo;s Note</div>
+          <div class="note-body">
+		   Shipped as four US Letter pages (21.6 x 27.9 cm) on Canon matte paper to serve as lens resolution and sharpness assesment tool when photographing flat/paper originals. Printable PDF file is shipped as well, so customers may print any number of their own copies on any paper they choose.
+            <!-- Add your note to the seller here -->
+          </div>
+        </div>
+      </div>
+    </article>
+
+
+   
+    </div>
+    <footer class="page-foot">
+      · film4ever.info·
+    </footer>
+  </main>
+
+</body>
+</html>
