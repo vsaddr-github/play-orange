@@ -75,6 +75,12 @@
     border-bottom: 1px solid var(--rule);
   }
   .summary strong { font-weight: 500; color: var(--ink); }
+  .summary code {
+    font-family: 'DM Mono', monospace;
+    background: var(--surface);
+    padding: 1px 5px;
+    border-radius: 2px;
+  }
 
   .stack { display: flex; flex-direction: column; gap: 24px; }
   .card {
@@ -102,6 +108,27 @@
     max-width: 100%; max-height: 100%;
     width: auto; height: auto;
     object-fit: contain; display: block;
+  }
+  /* Gallery caption — appears when a UPC artwork folder exists */
+  .photo-slot.has-gallery {
+    cursor: pointer;
+  }
+  .photo-slot.has-gallery::after {
+    content: 'Click to view artwork  ↗';
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: rgba(26, 24, 20, 0.72);
+    color: #f5f2ec;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: center;
+    padding: 8px 12px;
+    backdrop-filter: blur(2px);
+    transition: background 0.15s ease;
+  }
+  .photo-slot.has-gallery:hover::after {
+    background: rgba(200, 64, 26, 0.85);
   }
   .photo-placeholder {
     flex-direction: column;
@@ -240,14 +267,75 @@
 </style>
 </head>
 <body>
+<script src="galleries.js"></script>
+<script>
+  // Currency symbol shown before every price — change once, applies everywhere.
+  const CURRENCY = "€";// "$"; 
+  function formatPrice(val) {
+    if (val === null || val === undefined) return "—";
+    return CURRENCY + val.toFixed(2);
+  }
+  const PRICES = {
+  "B0BYLYRTZJ": 19.78,  //  3 frames
+  "B0BYV4ZR484": 23.65, //  4 frames
+  "B0BYV4ZR48": 27.50, // 5 frames
+  "B0GLDN8DJT": 27.50, // 645+6x6+6x7 for Film Scanning with DSLR/
+  //"B0DMVDM5B4": 27.50, // 6x7 and 6x9 Vlads Test Target and Focusing
+  "B0BZ6FMYJT": 27.50, // 6x7 and 6x9  Type 120 Vlads Test Target and Focusing 
+  "B0BZ5ZJCPS": 27.40, // 4x5 Slides with Focus Checker 
+  "B0CWDMLS59": 13.20, // 6x6 Focus Checker MF Slide by Vlads Test 
+  "B0C212M826": 13.93, // 35 mm Slide for Focusing and Camera Scan
+  "B0C1WR6VPR": 13.60, // New 35 mm Focusing and Alignment Aid  
+  "B0C2GXR6ZP": 52.00, // 35 mm Hi-Res (5 Frames) and Type 120 Vlads  
+  "B0GTN8YBV5": 52.00, // 35 mm and 645+6x6+6x7 Vlads Focus Checker
+  "B0GLFCR4WC": 27.50, // 645 x 3 Focus Checker 
+  "B0BZ5ZJCPS-4": 99.00, // 4x5 - 4 uncut 
+  "VTTBACKGR01": 25.00, // vtt background
+  //"B0FTKPP2S9": 23.52, // 6x6 Focus Test Negative on Type 120 Film
+  //"B0GNPDMD35": 25.90, // Scan Film Sharp with Vlads Focus Checker P
+  "B0DNDWB66G": null, // (not in active listings)
+  "B0GNRF4MZ4": null, // (not in active listings)
+  };
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('[data-price-for]').forEach(function (el) {
+      const asin = el.getAttribute('data-price-for');
+      const val = PRICES[asin];
+      //el.textContent = (val === null || val === undefined) ? '—' : ('€' + val.toFixed(2));
+	  el.textContent = formatPrice(val);
+    });
+    // Gallery wiring — reads UPC from each card's own meta table,
+    // no data-upc attribute needed on the card element.
+    function getCardUPC(card) {
+      const dts = card.querySelectorAll('.meta dt');
+      for (let i = 0; i < dts.length; i++) {
+        if (dts[i].textContent.trim() === 'UPC') {
+          const dd = dts[i].nextElementSibling;
+          return dd ? dd.textContent.trim() : null;
+        }
+      }
+      return null;
+    }
+    const activeGalleries = (typeof GALLERIES !== 'undefined') ? GALLERIES : new Set();
+    document.querySelectorAll('.card').forEach(function (card) {
+      const upc = getCardUPC(card);
+      if (!upc || !activeGalleries.has(upc)) return;
+      const slot = card.querySelector('.photo-slot');
+      if (!slot) return;
+      slot.classList.add('has-gallery');
+      slot.addEventListener('click', function () {
+        window.open(upc + '/gallery.html', '_blank');
+      });
+    });
+  });
+</script>
   <div class="series-header">
     <div class="series-name">VLADS TEST TARGET</div>
-    <div class="series-sub">Amazon Catalog · Snapshot 2026-06-10</div>
+    <div class="series-sub">VTT Catalog · Snapshot 2026-06-10</div>
   </div>
   <main>
     <div class="eyebrow">Wholesale Catalog</div>
     <h1>Vlads Test Target <em>catalog</em>, on one page.</h1>
-    <p class="lede">Active Amazon/eBay listings</p>
+    <p class="lede">Current offers as of June, 2026</p>
     <p class="summary"><strong></strong> https://vsaddr-github.github.io/play-orange/v1/catalog/VTT_Wholesale_Catalog.html </p>
     <div class="stack">
       
@@ -268,7 +356,7 @@
             <span class="asin">B0BYLYRTZJ</span>
             <div class="prices">
               <div class="price-block wholesale">
-                <span class="price-val">€19.00</span>
+                <span class="price-val" data-price-for="B0BYLYRTZJ">—</span>
                 <span class="price-lbl">Wholesale</span>
               </div>
             </div>
@@ -283,7 +371,7 @@
         </dl>
         <div class="note">
           <div class="note-label">Vlad&rsquo;s Note</div>
-          <div class="note-body"> A three-frame strip works well with vintage slide duplicators like the Nikon or Canon models, and it's perfectly suited to the VALOI 365 film holder. However, three-frame strips can be awkward to handle in the VALOI Easy 120, Negative Supply, and Digitaliza+ holders.
+          <div class="note-body"> A three-frame strip works well with vintage slide duplicators like the Nikon or Canon models, and it's perfectly suited to the VALOI 365 film holder. However, three-frame strips can be awkward to handle in the VALOI Easy 120, Negative Supply, and Digitaliza+ holders. This target has resolution around 100 lp/mm.
             <!-- Add your note to the seller here -->
           </div>
         </div>
@@ -304,10 +392,10 @@
       <div class="card-content">
         <header class="card-head">
           <div class="asin-row">
-            <span class="asin">B0BYV4ZR48</span>
+            <span class="asin">B0BYV4ZR484</span>
             <div class="prices">
               <div class="price-block wholesale">
-                <span class="price-val">€22.50</span>
+                <span class="price-val" data-price-for="B0BYV4ZR484">-</span>
                 <span class="price-lbl">Wholesale</span>
               </div>
             </div>
@@ -322,7 +410,7 @@
         </dl>
         <div class="note">
           <div class="note-label">Vlad&rsquo;s Note</div>
-          <div class="note-body"> A four-frame strip will work with holders - including the VALOI Easy 120 - with medium length film channel. The idea is that when fine-tuning your rig, you want to work with a frame that isn't at the end of the strip, where curling tends to occur.
+          <div class="note-body"> A four-frame strip will work with holders - including the VALOI Easy 120 - with medium length film channel. The idea is that when fine-tuning your rig, you want to work with a frame that isn't at the end of the strip, where curling tends to occur. This target has resolution around 100 lp/mm.
             <!-- Add your note to the seller here -->
           </div>
         </div>
@@ -346,7 +434,7 @@
             <span class="asin">B0BYV4ZR48</span>
             <div class="prices">
               <div class="price-block wholesale">
-                <span class="price-val">€26.00</span>
+                <span class="price-val" data-price-for="B0BYV4ZR48">-</span>
                 <span class="price-lbl">Wholesale</span>
               </div>
             </div>
@@ -361,7 +449,7 @@
         </dl>
         <div class="note">
           <div class="note-label">Vlad&rsquo;s Note</div>
-          <div class="note-body"> A five-frame strip is ideal for almost any film holder, including the VALOI Easy 120, Negative Supply, and Digitaliza+. The idea is that when fine-tuning your rig, you want to work with a frame that isn't at the end of the strip, where curling tends to occur.
+          <div class="note-body"> A five-frame strip is ideal for almost any film holder, including the VALOI Easy 120, Negative Supply, and Digitaliza+. The idea is that when fine-tuning your rig, you want to work with a frame that isn't at the end of the strip, where curling tends to occur. This target has resolution around 100 lp/mm.
             <!-- Add your note to the seller here -->
           </div>
         </div>
@@ -383,7 +471,7 @@
             <span class="asin">B0GLDN8DJT</span>
             <div class="prices">
               <div class="price-block wholesale">
-                <span class="price-val">€24.00</span>
+                <span class="price-val" data-price-for="B0GLDN8DJT">-</span>
                 <span class="price-lbl">Wholesale</span>
               </div>
             </div>
@@ -422,7 +510,7 @@
             <span class="asin">B0BZ6FMYJT</span>
             <div class="prices">
               <div class="price-block wholesale">
-                <span class="price-val">€24.00</span>
+                <span class="price-val" data-price-for="B0BZ6FMYJT">-</span>
                 <span class="price-lbl">Wholesale</span>
               </div>
             </div>
@@ -459,12 +547,12 @@
             <span class="asin">B0BZ5ZJCPS</span>
             <div class="prices">
               <div class="price-block wholesale">
-                <span class="price-val">€24.00</span>
+                <span class="price-val" data-price-for="B0BZ5ZJCPS">-</span>
                 <span class="price-lbl">Wholesale</span>
               </div>
             </div>
           </div>
-          <h2 class="title">Digitize 4x5 Slides with Focus Checker by Vlads Test Target. Excellent Aid for Focusing DSLR/mirrorless Cameras. Digitize Your Priceless Slides &amp; Negatives w/The Highest Sharpness. 4x5 Sheet.</h2>
+          <h2 class="title">Digitize 4x5" (10 x 12.5 cm) Slides or Negatives with Focus Checker by Vlads Test Target. Excellent Aid for Focusing DSLR/mirrorless Cameras.</h2>
           <a class="amzn-link" href="https://www.amazon.com/dp/B0BZ5ZJCPS" target="_blank" rel="noopener">View on Amazon ↗</a>
         </header>
         <dl class="meta">
@@ -475,6 +563,7 @@
         <div class="note">
           <div class="note-label">Vlad&rsquo;s Note</div>
           <div class="note-body">
+		    This target has maximum resolution ~ 43 lp/mm. 
             <!-- Add your note to the seller here -->
           </div>
         </div>
@@ -497,7 +586,7 @@
             <span class="asin">B0CWDMLS59</span>
             <div class="prices">
               <div class="price-block wholesale">
-                <span class="price-val">€13.20</span>
+                <span class="price-val" data-price-for="B0CWDMLS59">-</span>
                 <span class="price-lbl">Wholesale</span>
               </div>
             </div>
@@ -538,12 +627,12 @@
             <span class="asin">B0C212M826</span>
             <div class="prices">
               <div class="price-block wholesale">
-                <span class="price-val">€13.93</span>
+                <span class="price-val" data-price-for="B0C212M826">-</span>
                 <span class="price-lbl">Wholesale</span>
               </div>
             </div>
           </div>
-          <h2 class="title">Test Negative for Focusing and Camera Scanning with DSLR/mirrorless. Digitize Your Priceless Slides &amp; Negatives. Explore and Utilize Your Lens Sharpness and Fidelity. (VTT-35MM-SLIDE)</h2>
+          <h2 class="title">35 mm mounted slide. Test Negative for Focusing and Camera Scanning with DSLR/mirrorless. Digitize Your Priceless Slides &amp; Negatives. Explore and Utilize Your Lens Sharpness and Fidelity. (VTT-35MM-SLIDE)</h2>
           <a class="amzn-link" href="https://www.amazon.com/dp/B0C212M826" target="_blank" rel="noopener">View on Amazon ↗</a>
         </header>
         <dl class="meta">
@@ -554,6 +643,7 @@
         <div class="note">
           <div class="note-label">Vlad&rsquo;s Note</div>
           <div class="note-body">
+		    Single frame is mounted in the thin (2 mm) glassless mount GEPE 7011 with aluminium mask.
             <!-- Add your note to the seller here -->
           </div>
         </div>
@@ -576,7 +666,7 @@
             <span class="asin">B0C1WR6VPR</span>
             <div class="prices">
               <div class="price-block wholesale">
-                <span class="price-val">€12.25</span>
+                <span class="price-val" data-price-for="B0C1WR6VPR">-</span>
                 <span class="price-lbl">Wholesale</span>
               </div>
             </div>
@@ -616,7 +706,7 @@
             <span class="asin">B0C2GXR6ZP</span>
             <div class="prices">
               <div class="price-block wholesale">
-                <span class="price-val">€49.00</span>
+                <span class="price-val" data-price-for="B0C2GXR6ZP">-</span>
                 <span class="price-lbl">Wholesale</span>
               </div>
             </div>
@@ -655,7 +745,7 @@
             <span class="asin">B0GTN8YBV5</span>
             <div class="prices">
               <div class="price-block wholesale">
-                <span class="price-val">€49.00</span>
+                <span class="price-val" data-price-for="B0GTN8YBV5">-</span>
                 <span class="price-lbl">Wholesale</span>
               </div>
             </div>
@@ -693,12 +783,12 @@
             <span class="asin">B0GLFCR4WC</span>
             <div class="prices">
               <div class="price-block wholesale">
-                <span class="price-val">€24.00</span>
+                <span class="price-val" data-price-for="B0GLFCR4WC">-</span>
                 <span class="price-lbl">Wholesale</span>
               </div>
             </div>
           </div>
-          <h2 class="title">Format 645 (6x4.5) Focus Checker for Film Scanning with DSLR/mirrorless. Three Frames on MF Film. Digitize Slides &amp; Negatives. Fully Utilize Your Lens Sharpness and Fidelity. Model 645-3</h2>
+          <h2 class="title">Medium Format 645 (6x4.5) Focus Checker for Film Scanning with DSLR/mirrorless. Three Frames on MF Film. Digitize Slides &amp; Negatives. Fully Utilize Your Lens Sharpness and Fidelity. Model 645-3</h2>
           <a class="amzn-link" href="https://www.amazon.com/dp/B0GLFCR4WC" target="_blank" rel="noopener">View on Amazon ↗</a>
         </header>
         <dl class="meta">
@@ -715,7 +805,78 @@
       </div>
     </article>
 
+       <article class="card">
+      <div class="photo-slot">
+        <img class="photo-img" src="64437300001.jpg" alt="Product photo for B0BZ5ZJCPS-4"
+             onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src=this.src.replace(/\.jpg$/i,'.png');}else{this.style.display='none';this.nextElementSibling.style.display='flex';}">
+        <div class="photo-placeholder" style="display:none;">
+          <span class="ph-label">PHOTO</span>
+          <span class="ph-filename">64437300001.jpg / .png</span>
+        </div>
+      </div>
+      <div class="card-content">
+        <header class="card-head">
+          <div class="asin-row">
+            <span class="asin">B0BZ5ZJCPS-4</span>
+            <div class="prices">
+              <div class="price-block wholesale">
+                <span class="price-val" data-price-for="B0BZ5ZJCPS-4">-</span>
+                <span class="price-lbl">Wholesale</span>
+              </div>
+            </div>
+          </div>
+          <h2 class="title">8x10 Transparent Test Target to help scan large format negatives from view cameras. </h2>
+          <a class="amzn-link" href="https://www.amazon.com/dp/B0BZ5ZJCPS-4" target="_blank" rel="noopener">View on Amazon ↗</a>
+        </header>
+        <dl class="meta">
+          <dt>SKU</dt><dd>n/a</dd>
+          <dt>FNSKU</dt><dd>n/a</dd>
+          <dt>UPC</dt><dd>64437300001</dd>
+        </dl>
+        <div class="note">
+          <div class="note-label">Vlad&rsquo;s Note</div>
+          <div class="note-body">
+			This test target is one uncut sheet of film compromized of four 4x5" targets (see B0BZ5ZJCPS above). If you have 8x10 inch ( 20x25 cm) negatives which you want to digitize use this large target to test/calibrate your scanning setup. Fine raster helps ensure uniform illumination from background.  
+          </div>
+        </div>
+      </div>
+    </article>
    
+    <article class="card">
+      <div class="photo-slot">
+        <img class="photo-img" src="64437300002.jpg" alt="Product photo for B0BZ5ZJCPS-4"
+             onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src=this.src.replace(/\.jpg$/i,'.png');}else{this.style.display='none';this.nextElementSibling.style.display='flex';}">
+        <div class="photo-placeholder" style="display:none;">
+          <span class="ph-label">PHOTO</span>
+          <span class="ph-filename">64437300002.jpg / .png</span>
+        </div>
+      </div>
+      <div class="card-content">
+        <header class="card-head">
+          <div class="asin-row">
+            <span class="asin">VTTBACKGR01</span>
+            <div class="prices">
+              <div class="price-block wholesale">
+                <span class="price-val" data-price-for="VTTBACKGR01">-</span>
+                <span class="price-lbl">Wholesale</span>
+              </div>
+            </div>
+          </div>
+          <h2 class="title">Printable (PDF) background for flat originals. </h2>
+        </header>
+        <dl class="meta">
+          <dt>SKU</dt><dd>n/a</dd>
+          <dt>FNSKU</dt><dd>n/a</dd>
+          <dt>UPC</dt><dd>64437300002</dd>
+        </dl>
+        <div class="note">
+          <div class="note-label">Vlad&rsquo;s Note</div>
+          <div class="note-body">
+		   Shipped as four US Letter pages (21.6 x 27.9 cm) on Canon matte paper to serve as lens resolution and sharpness assesment tool when photographing flat/paper originals. Printable PDF file is shipped as well, so customers may print any number of their own copies on any paper they choose.
+          </div>
+        </div>
+      </div>
+    </article>
 
    
     </div>
